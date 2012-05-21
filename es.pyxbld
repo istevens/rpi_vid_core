@@ -1,0 +1,8 @@
+#es.pyxbld
+def make_ext(modname, pyxfilename):
+    from distutils.extension import Extension
+    ext = Extension(name='es',
+                    sources=['es.pyx'],
+                    include_dirs=['.','/opt/vc/include']
+                    )
+    return ext
