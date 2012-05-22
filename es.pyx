@@ -3,7 +3,7 @@ from libc.stdlib cimport malloc, free
 
 cdef extern from "./esUtil.h":
     ctypedef struct ESContext:
-        pass
+        void *userData
     ctypedef unsigned char    GLboolean
     ctypedef int              GLint
     ctypedef unsigned int     GLuint
@@ -19,10 +19,16 @@ cdef drawFunc this_callback
 
 cdef class Context:
     cdef ESContext *_c_esctx
+    cdef object draw_func
     def __cinit__(self):
         self._c_esctx = <ESContext*>malloc(sizeof(ESContext))
+        self._c_esctx.userData = <void*>self
         if self._c_esctx is NULL:
             raise MemoryError("Couldn't assign ESContext memory")
+            
+        def on_draw(ctx):
+            print "drawing...", ctx
+        self.draw_func = on_draw
             
     def __dealloc__(self):
         free(self._c_esctx)
@@ -38,13 +44,12 @@ def CreateWindow(Context ctx, char *title, GLint width, GLint height, GLuint fla
 def RegisterDrawFunc(Context ctx, object func):
     if not callable(func):
         raise TypeError("Second argument must be a callable")
-    this_callback = <drawFunc>func
-    esRegisterDrawFunc(ctx._c_esctx, draw)
+    ctx.draw_func = func
+    esRegisterDrawFunc(ctx._c_esctx, _draw)
     
-cdef void draw(ESContext *ctx):
-    pyctx = Context.__new__()
-    pyctx._c_esctx = ctx
-    (<object>this_callback)(pyctx)
+cdef void _draw(ESContext *ctx):
+    pyctx = <object>ctx.userData
+    pyctx.draw_func(pyctx)
         
 def MainLoop(Context ctx):
     esMainLoop(ctx._c_esctx)
