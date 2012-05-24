@@ -140,12 +140,14 @@ cdef extern from "/opt/vc/include/VG/openvg.h":
                                          VGfloat * width, VGfloat * height)
     void vgDrawPath(VGPath path, VGbitfield paintModes)
     
+    void vgClear(VGint x, VGint y, VGint width, VGint height)
+    
     void vgSetf (VGParamType type, VGfloat value)
     void vgSeti (VGParamType type, VGint value)
     void vgSetfv(VGParamType type, VGint count,
-                         const VGfloat * values)
+                         VGfloat * values)
     void vgSetiv(VGParamType type, VGint count,
-                         const VGint * values)
+                         VGint * values)
     
 
 class VGPathSegment(object):
@@ -168,13 +170,24 @@ class VGPathAbsRel(object):
     VG_RELATIVE                                 = 1
 
 
-def SetParam(VGParamType paramType, value):
-    if isinstance(value, float):
-        vgSetf(paramType, value)
-    elif isinstance(value, int):
-        vgSeti(paramType, value)
-    else:
-        raise TypeError("value must be float or int. Got %r instead"%value)
+#def SetParam(int paramType, value):
+#    if isinstance(value, float):
+#        vgSetf(<VGParamType>paramType, value)
+#    elif isinstance(value, int):
+#        vgSeti(<VGParamType>paramType, value)
+#    else:
+#        raise TypeError("value must be float or int. Got %r instead"%value)
+
+def SetClearColour(VGfloat r, VGfloat g, VGfloat b, VGfloat a):
+    cdef VGfloat c[4]
+    c[0]=r
+    c[1]=g
+    c[2]=b
+    c[3]=a
+    vgSetfv(VG_CLEAR_COLOR, 4, c)
+    
+def Clear(VGint x, VGint y, VGint width, VGint height):
+    vgClear(x, y, width, height)
 
 
 cdef class Path:

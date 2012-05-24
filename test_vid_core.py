@@ -24,6 +24,8 @@ path.AppendPathData(cmds, coords)
 
 def func(ctx):
     print "foo", ctx
+    vg.SetClearColour(1.0,0.0,1.0,1.0)
+    vg.Clear(0,0,300,200)
     path = vg.Path()
     path.AppendPathData(cmds, coords)
     path.DrawPath()
