@@ -10,6 +10,7 @@ cdef extern from "./esUtil.h":
     ctypedef void *EGLContext
     ctypedef void *EGLSurface
     ctypedef struct ESContext:
+        void *pyctx
         void *userData
         GLint width
         GLint height
@@ -28,6 +29,11 @@ cdef extern from "./esUtil.h":
     void esRegisterDrawFunc ( ESContext *esContext, drawFunc user_func )
     void esMainLoop ( ESContext *esContext )
     
+cdef extern from "./Hello_Triangle.h":
+    int Init(ESContext *esContext)
+    void Draw(ESContext *esContext)
+    
+    
 cdef drawFunc this_callback
 
 
@@ -37,7 +43,7 @@ cdef class Context:
     def __cinit__(self):
         self._c_esctx = <ESContext*>malloc(sizeof(ESContext))
         esInitContext(self._c_esctx)
-        self._c_esctx.userData = <void*>self
+        self._c_esctx.pyctx = <void*>self
         if self._c_esctx is NULL:
             raise MemoryError("Couldn't assign ESContext memory")
 
@@ -49,7 +55,15 @@ cdef class Context:
         free(self._c_esctx)
         
     def get_self(self):
-        return <object>(self._c_esctx.userData)
+        return <object>(self._c_esctx.pyctx)
+        
+        
+def htInit(Context pyctx):
+    if not Init(pyctx._c_esctx):
+        raise RuntimeError("Failed to initialise ES Context")
+        
+def htDraw(Context pyctx):
+    Draw(pyctx._c_esctx)
         
         
 def CreateWindow(Context ctx, char *title, GLint width, GLint height, GLuint flags):
@@ -64,7 +78,7 @@ def RegisterDrawFunc(Context ctx, object func):
     
 cdef void _draw(ESContext *ctx):
     cdef Context pyctx
-    pyctx = <Context>(ctx.userData)
+    pyctx = <Context>(ctx.pyctx)
     pyctx.draw_func(pyctx)
         
 def MainLoop(Context ctx):

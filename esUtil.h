@@ -67,6 +67,7 @@ typedef struct
 typedef struct _escontext
 {
    /// Put your user data here...
+   void*       pyctx;
    void*       userData;
 
    /// Window width
