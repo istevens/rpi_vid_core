@@ -47,7 +47,7 @@ static Display *x_display = NULL;
 //
 EGLBoolean CreateEGLContext ( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
                               EGLContext* eglContext, EGLSurface* eglSurface,
-                              EGLint attribList[])
+                              EGLint attribList[], EGLenum api)
 {
    EGLint numConfigs;
    EGLint majorVersion;
@@ -57,6 +57,7 @@ EGLBoolean CreateEGLContext ( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
    EGLSurface surface;
    EGLConfig config;
    #ifndef RPI_NO_X
+   //EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE, EGL_NONE };
    EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE, EGL_NONE };
    #else
    EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
@@ -83,16 +84,25 @@ EGLBoolean CreateEGLContext ( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
    {
       return EGL_FALSE;
    }
-
+    
+   // set API
+   if (!eglBindAPI(api))
+   {
+       printf("failed to bind API\n");
+       return EGL_FALSE;
+   }
+    
    // Get configs
    if ( !eglGetConfigs(display, NULL, 0, &numConfigs) )
    {
+       printf("failed to get configs\n");
       return EGL_FALSE;
    }
-
+    
    // Choose config
    if ( !eglChooseConfig(display, attribList, &config, 1, &numConfigs) )
    {
+       printf("failed to choose config\n");
       return EGL_FALSE;
    }
 
@@ -100,19 +110,23 @@ EGLBoolean CreateEGLContext ( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
    surface = eglCreateWindowSurface(display, config, (EGLNativeWindowType)hWnd, NULL);
    if ( surface == EGL_NO_SURFACE )
    {
+       printf("failed to make surface\n");
       return EGL_FALSE;
    }
 
    // Create a GL context
-   context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs );
+   //context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs ); //OK for GLES
+   context = eglCreateContext(display, config, EGL_NO_CONTEXT, NULL ); //necessary for OpenVG
    if ( context == EGL_NO_CONTEXT )
    {
+       printf("failed to make context\n");
       return EGL_FALSE;
    }   
    
    // Make the context current
    if ( !eglMakeCurrent(display, surface, surface, context) )
    {
+       printf("failed to make current");
       return EGL_FALSE;
    }
    
@@ -121,6 +135,7 @@ EGLBoolean CreateEGLContext ( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
    *eglContext = context;
    return EGL_TRUE;
 } 
+
 
 #ifdef RPI_NO_X
 ///
@@ -335,7 +350,7 @@ void ESUTIL_API esInitContext ( ESContext *esContext )
 //          ES_WINDOW_STENCIL     - specifies that a stencil buffer should be created
 //          ES_WINDOW_MULTISAMPLE - specifies that a multi-sample buffer should be created
 //
-GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, GLint width, GLint height, GLuint flags )
+GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, GLint width, GLint height, GLuint flags, EGLenum api )
 {
    EGLint attribList[] =
    {
@@ -348,6 +363,18 @@ GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, G
        EGL_SAMPLE_BUFFERS, (flags & ES_WINDOW_MULTISAMPLE) ? 1 : 0,
        EGL_NONE
    };
+   
+   //~ EGLint attribList[] =
+   //~ {
+       //~ EGL_RED_SIZE,       5,
+       //~ EGL_GREEN_SIZE,     6,
+       //~ EGL_BLUE_SIZE,      5,
+       //~ EGL_ALPHA_SIZE,     (flags & ES_WINDOW_ALPHA) ? 8 : EGL_DONT_CARE,
+       //~ EGL_LUMINANCE_SIZE, EGL_DONT_CARE,
+       //~ EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+       //~ EGL_SAMPLES, 1,
+       //~ EGL_NONE
+   //~ };
    
    if ( esContext == NULL )
    {
@@ -367,7 +394,8 @@ GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, G
                             &esContext->eglDisplay,
                             &esContext->eglContext,
                             &esContext->eglSurface,
-                            attribList) )
+                            attribList,
+                            api) )
    {
       return GL_FALSE;
    }

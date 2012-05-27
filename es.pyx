@@ -3,6 +3,7 @@ from libc.stdlib cimport malloc, free
 
 cdef extern from "./esUtil.h":
     ctypedef unsigned char    GLboolean
+    ctypedef unsigned int     EGLenum
     ctypedef int              GLint
     ctypedef unsigned int     GLuint
     ctypedef void *EGLNativeWindowType
@@ -25,7 +26,8 @@ cdef extern from "./esUtil.h":
     ctypedef void (*drawFunc)(ESContext *)
     
     void esInitContext ( ESContext *esContext )
-    GLboolean esCreateWindow ( ESContext *esContext, char *title, GLint width, GLint height, GLuint flags )
+    GLboolean esCreateWindow ( ESContext *esContext, char *title, 
+            GLint width, GLint height, GLuint flags, EGLenum api )
     void esRegisterDrawFunc ( ESContext *esContext, drawFunc user_func )
     void esMainLoop ( ESContext *esContext )
     
@@ -66,8 +68,9 @@ def htDraw(Context pyctx):
     Draw(pyctx._c_esctx)
         
         
-def CreateWindow(Context ctx, char *title, GLint width, GLint height, GLuint flags):
-    if esCreateWindow(ctx._c_esctx, title, width, height, flags) != 1:
+def CreateWindow(Context ctx, char *title, GLint width, GLint height, 
+                                        GLuint flags, EGLenum api):
+    if esCreateWindow(ctx._c_esctx, title, width, height, flags, api) != 1:
         raise RuntimeError("Failed to create window")
     
 def RegisterDrawFunc(Context ctx, object func):
