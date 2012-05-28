@@ -1,0 +1,12 @@
+#egl.pyxbld
+
+def make_ext(modname, pyxfilename):
+    from distutils.extension import Extension
+    ext = Extension(name='egl',
+                    sources=['egl.pyx'],
+                    extra_compile_args=['-DRPI_NO_X'],
+                    libraries=['GLESv2','EGL','m','bcm_host'],
+                    library_dirs=['/opt/vc/lib'],
+                    include_dirs=['.','/opt/vc/include']
+                    )
+    return ext
