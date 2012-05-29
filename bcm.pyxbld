@@ -1,0 +1,12 @@
+#bcm.pyxbld
+
+def make_ext(modname, pyxfilename):
+    from distutils.extension import Extension
+    ext = Extension(name='bcm',
+                    sources=['bcm.pyx'],
+                    extra_compile_args=['-DRPI_NO_X'],
+                    libraries=['m','bcm_host'],
+                    library_dirs=['/opt/vc/lib'],
+                    include_dirs=['.','/opt/vc/include']
+                    )
+    return ext
