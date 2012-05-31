@@ -11,7 +11,7 @@ print "check:", self is ctx
 
 ES_WINDOW_RGB=0
 try:
-    es.CreateWindow(ctx, "Hello Triangle", 320, 240, ES_WINDOW_RGB, egl.API.EGL_OPENVG_API )
+    es.CreateWindow(ctx, "Hello Triangle", 320, 240, ES_WINDOW_RGB, egl._constants.EGL_OPENVG_API )
 except RuntimeError:
     print "EGL error: %0x"%egl.getError()
     raise

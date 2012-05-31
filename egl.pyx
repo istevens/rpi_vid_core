@@ -21,19 +21,19 @@ cdef extern from "/opt/vc/include/EGL/egl.h":
     char * eglQueryString(EGLDisplay dpy, EGLint name)
     EGLBoolean eglGetConfigs(EGLDisplay dpy, EGLConfig *configs,
 			 EGLint config_size, EGLint *num_config)
-    EGLBoolean eglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list,
+    EGLBoolean eglChooseConfig(EGLDisplay dpy, EGLint *attrib_list,
 			   EGLConfig *configs, EGLint config_size,
 			   EGLint *num_config)
     EGLBoolean eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config,
 			      EGLint attribute, EGLint *value)
     EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 				  EGLNativeWindowType win,
-				  const EGLint *attrib_list)
+				  EGLint *attrib_list)
     EGLSurface eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
-				   const EGLint *attrib_list)
+				   EGLint *attrib_list)
     EGLSurface eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
 				  EGLNativePixmapType pixmap,
-				  const EGLint *attrib_list)
+				  EGLint *attrib_list)
     EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
     EGLBoolean eglQuerySurface(EGLDisplay dpy, EGLSurface surface,
 			   EGLint attribute, EGLint *value)
@@ -67,153 +67,151 @@ cdef extern from "/opt/vc/include/EGL/egl.h":
 			  EGLNativePixmapType target)
 
 class _constants:
-    #/* EGL Versioning */
-    #define EGL_VERSION_1_0			1
-    #define EGL_VERSION_1_1			1
-    #define EGL_VERSION_1_2			1
-    #define EGL_VERSION_1_3			1
-    #define EGL_VERSION_1_4			1
+    EGL_VERSION_1_0 = 1 # 
+    EGL_VERSION_1_1 = 1 # 
+    EGL_VERSION_1_2 = 1 # 
+    EGL_VERSION_1_3 = 1 # 
+    EGL_VERSION_1_4 = 1 # 
 
-    /* EGL Enumerants. Bitmasks and other exceptional cases aside, most
+    ''' EGL Enumerants. Bitmasks and other exceptional cases aside, most
      * enums are assigned unique values starting at 0x3000.
-     */
+     '''
 
-    /* EGL aliases */
-    #define EGL_FALSE			0
-    #define EGL_TRUE			1
+    ''' EGL aliases '''
+    EGL_FALSE = 0 # 
+    EGL_TRUE = 1 # 
 
-    /* Out-of-band handle values */
-    #define EGL_DEFAULT_DISPLAY		((EGLNativeDisplayType)0)
-    #define EGL_NO_CONTEXT			((EGLContext)0)
-    #define EGL_NO_DISPLAY			((EGLDisplay)0)
-    #define EGL_NO_SURFACE			((EGLSurface)0)
+    ''' Out-of-band handle values '''
+    EGL_DEFAULT_DISPLAY = 0 # 
+    EGL_NO_CONTEXT = 0 # 
+    EGL_NO_DISPLAY = 0 # 
+    EGL_NO_SURFACE = 0 # 
 
-    /* Out-of-band attribute value */
-    #define EGL_DONT_CARE			((EGLint)-1)
+    ''' Out-of-band attribute value '''
+    EGL_DONT_CARE = -1 # 
 
-    /* Errors / GetError return values */
-    #define EGL_SUCCESS			0x3000
-    #define EGL_NOT_INITIALIZED		0x3001
-    #define EGL_BAD_ACCESS			0x3002
-    #define EGL_BAD_ALLOC			0x3003
-    #define EGL_BAD_ATTRIBUTE		0x3004
-    #define EGL_BAD_CONFIG			0x3005
-    #define EGL_BAD_CONTEXT			0x3006
-    #define EGL_BAD_CURRENT_SURFACE		0x3007
-    #define EGL_BAD_DISPLAY			0x3008
-    #define EGL_BAD_MATCH			0x3009
-    #define EGL_BAD_NATIVE_PIXMAP		0x300A
-    #define EGL_BAD_NATIVE_WINDOW		0x300B
-    #define EGL_BAD_PARAMETER		0x300C
-    #define EGL_BAD_SURFACE			0x300D
-    #define EGL_CONTEXT_LOST		0x300E	/* EGL 1.1 - IMG_power_management */
+    ''' Errors / GetError return values '''
+    EGL_SUCCESS = 0x3000 # 
+    EGL_NOT_INITIALIZED = 0x3001 # 
+    EGL_BAD_ACCESS = 0x3002 # 
+    EGL_BAD_ALLOC = 0x3003 # 
+    EGL_BAD_ATTRIBUTE = 0x3004 # 
+    EGL_BAD_CONFIG = 0x3005 # 
+    EGL_BAD_CONTEXT = 0x3006 # 
+    EGL_BAD_CURRENT_SURFACE = 0x3007 # 
+    EGL_BAD_DISPLAY = 0x3008 # 
+    EGL_BAD_MATCH = 0x3009 # 
+    EGL_BAD_NATIVE_PIXMAP = 0x300A # 
+    EGL_BAD_NATIVE_WINDOW = 0x300B # 
+    EGL_BAD_PARAMETER = 0x300C # 
+    EGL_BAD_SURFACE = 0x300D # 
+    EGL_CONTEXT_LOST = 0x300E # ''' EGL 1.1 - IMG_power_management ''' 
 
-    /* Reserved 0x300F-0x301F for additional errors */
+    ''' Reserved 0x300F-0x301F for additional errors '''
 
-    /* Reserved 0x3041-0x304F for additional config attributes */
+    ''' Reserved 0x3041-0x304F for additional config attributes '''
 
-    /* Config attribute values */
-    #define EGL_SLOW_CONFIG			0x3050	/* EGL_CONFIG_CAVEAT value */
-    #define EGL_NON_CONFORMANT_CONFIG	0x3051	/* EGL_CONFIG_CAVEAT value */
-    #define EGL_TRANSPARENT_RGB		0x3052	/* EGL_TRANSPARENT_TYPE value */
-    #define EGL_RGB_BUFFER			0x308E	/* EGL_COLOR_BUFFER_TYPE value */
-    #define EGL_LUMINANCE_BUFFER		0x308F	/* EGL_COLOR_BUFFER_TYPE value */
+    ''' Config attribute values '''
+    EGL_SLOW_CONFIG = 0x3050 # ''' EGL_CONFIG_CAVEAT value ''' 
+    EGL_NON_CONFORMANT_CONFIG = 0x3051 # ''' EGL_CONFIG_CAVEAT value ''' 
+    EGL_TRANSPARENT_RGB = 0x3052 # ''' EGL_TRANSPARENT_TYPE value ''' 
+    EGL_RGB_BUFFER = 0x308E # ''' EGL_COLOR_BUFFER_TYPE value ''' 
+    EGL_LUMINANCE_BUFFER = 0x308F # ''' EGL_COLOR_BUFFER_TYPE value ''' 
 
-    /* More config attribute values, for EGL_TEXTURE_FORMAT */
-    #define EGL_NO_TEXTURE			0x305C
-    #define EGL_TEXTURE_RGB			0x305D
-    #define EGL_TEXTURE_RGBA		0x305E
-    #define EGL_TEXTURE_2D			0x305F
+    ''' More config attribute values, for EGL_TEXTURE_FORMAT '''
+    EGL_NO_TEXTURE = 0x305C # 
+    EGL_TEXTURE_RGB = 0x305D # 
+    EGL_TEXTURE_RGBA = 0x305E # 
+    EGL_TEXTURE_2D = 0x305F # 
 
-    /* Config attribute mask bits */
-    #define EGL_PBUFFER_BIT			0x0001	/* EGL_SURFACE_TYPE mask bits */
-    #define EGL_PIXMAP_BIT			0x0002	/* EGL_SURFACE_TYPE mask bits */
-    #define EGL_WINDOW_BIT			0x0004	/* EGL_SURFACE_TYPE mask bits */
-    #define EGL_VG_COLORSPACE_LINEAR_BIT	0x0020	/* EGL_SURFACE_TYPE mask bits */
-    #define EGL_VG_ALPHA_FORMAT_PRE_BIT	0x0040	/* EGL_SURFACE_TYPE mask bits */
-    #define EGL_MULTISAMPLE_RESOLVE_BOX_BIT 0x0200	/* EGL_SURFACE_TYPE mask bits */
-    #define EGL_SWAP_BEHAVIOR_PRESERVED_BIT 0x0400	/* EGL_SURFACE_TYPE mask bits */
+    ''' Config attribute mask bits '''
+    EGL_PBUFFER_BIT = 0x0001 # ''' EGL_SURFACE_TYPE mask bits ''' 
+    EGL_PIXMAP_BIT = 0x0002 # ''' EGL_SURFACE_TYPE mask bits ''' 
+    EGL_WINDOW_BIT = 0x0004 # ''' EGL_SURFACE_TYPE mask bits ''' 
+    EGL_VG_COLORSPACE_LINEAR_BIT = 0x0020 # ''' EGL_SURFACE_TYPE mask bits ''' 
+    EGL_VG_ALPHA_FORMAT_PRE_BIT = 0x0040 # ''' EGL_SURFACE_TYPE mask bits ''' 
+    EGL_MULTISAMPLE_RESOLVE_BOX_BIT = 0x0200 # ''' EGL_SURFACE_TYPE mask bits ''' 
+    EGL_SWAP_BEHAVIOR_PRESERVED_BIT = 0x0400 # ''' EGL_SURFACE_TYPE mask bits ''' 
 
-    #define EGL_OPENGL_ES_BIT		0x0001	/* EGL_RENDERABLE_TYPE mask bits */
-    #define EGL_OPENVG_BIT			0x0002	/* EGL_RENDERABLE_TYPE mask bits */
-    #define EGL_OPENGL_ES2_BIT		0x0004	/* EGL_RENDERABLE_TYPE mask bits */
-    #define EGL_OPENGL_BIT			0x0008	/* EGL_RENDERABLE_TYPE mask bits */
+    EGL_OPENGL_ES_BIT = 0x0001 # ''' EGL_RENDERABLE_TYPE mask bits ''' 
+    EGL_OPENVG_BIT = 0x0002 # ''' EGL_RENDERABLE_TYPE mask bits ''' 
+    EGL_OPENGL_ES2_BIT = 0x0004 # ''' EGL_RENDERABLE_TYPE mask bits ''' 
+    EGL_OPENGL_BIT = 0x0008 # ''' EGL_RENDERABLE_TYPE mask bits ''' 
 
-    /* QueryString targets */
-    #define EGL_VENDOR			0x3053
-    #define EGL_VERSION			0x3054
-    #define EGL_EXTENSIONS			0x3055
-    #define EGL_CLIENT_APIS			0x308D
+    ''' QueryString targets '''
+    EGL_VENDOR = 0x3053 # 
+    EGL_VERSION = 0x3054 # 
+    EGL_EXTENSIONS = 0x3055 # 
+    EGL_CLIENT_APIS = 0x308D # 
 
-    /* QuerySurface / SurfaceAttrib / CreatePbufferSurface targets */
-    #define EGL_HEIGHT			0x3056
-    #define EGL_WIDTH			0x3057
-    #define EGL_LARGEST_PBUFFER		0x3058
-    #define EGL_TEXTURE_FORMAT		0x3080
-    #define EGL_TEXTURE_TARGET		0x3081
-    #define EGL_MIPMAP_TEXTURE		0x3082
-    #define EGL_MIPMAP_LEVEL		0x3083
-    #define EGL_RENDER_BUFFER		0x3086
-    #define EGL_VG_COLORSPACE		0x3087
-    #define EGL_VG_ALPHA_FORMAT		0x3088
-    #define EGL_HORIZONTAL_RESOLUTION	0x3090
-    #define EGL_VERTICAL_RESOLUTION		0x3091
-    #define EGL_PIXEL_ASPECT_RATIO		0x3092
-    #define EGL_SWAP_BEHAVIOR		0x3093
-    #define EGL_MULTISAMPLE_RESOLVE		0x3099
+    ''' QuerySurface / SurfaceAttrib / CreatePbufferSurface targets '''
+    EGL_HEIGHT = 0x3056 # 
+    EGL_WIDTH = 0x3057 # 
+    EGL_LARGEST_PBUFFER = 0x3058 # 
+    EGL_TEXTURE_FORMAT = 0x3080 # 
+    EGL_TEXTURE_TARGET = 0x3081 # 
+    EGL_MIPMAP_TEXTURE = 0x3082 # 
+    EGL_MIPMAP_LEVEL = 0x3083 # 
+    EGL_RENDER_BUFFER = 0x3086 # 
+    EGL_VG_COLORSPACE = 0x3087 # 
+    EGL_VG_ALPHA_FORMAT = 0x3088 # 
+    EGL_HORIZONTAL_RESOLUTION = 0x3090 # 
+    EGL_VERTICAL_RESOLUTION = 0x3091 # 
+    EGL_PIXEL_ASPECT_RATIO = 0x3092 # 
+    EGL_SWAP_BEHAVIOR = 0x3093 # 
+    EGL_MULTISAMPLE_RESOLVE = 0x3099 # 
 
-    /* EGL_RENDER_BUFFER values / BindTexImage / ReleaseTexImage buffer targets */
-    #define EGL_BACK_BUFFER			0x3084
-    #define EGL_SINGLE_BUFFER		0x3085
+    ''' EGL_RENDER_BUFFER values / BindTexImage / ReleaseTexImage buffer targets '''
+    EGL_BACK_BUFFER = 0x3084 # 
+    EGL_SINGLE_BUFFER = 0x3085 # 
 
-    /* OpenVG color spaces */
-    #define EGL_VG_COLORSPACE_sRGB		0x3089	/* EGL_VG_COLORSPACE value */
-    #define EGL_VG_COLORSPACE_LINEAR	0x308A	/* EGL_VG_COLORSPACE value */
+    ''' OpenVG color spaces '''
+    EGL_VG_COLORSPACE_sRGB = 0x3089 # ''' EGL_VG_COLORSPACE value ''' 
+    EGL_VG_COLORSPACE_LINEAR = 0x308A # ''' EGL_VG_COLORSPACE value ''' 
 
-    /* OpenVG alpha formats */
-    #define EGL_VG_ALPHA_FORMAT_NONPRE	0x308B	/* EGL_ALPHA_FORMAT value */
-    #define EGL_VG_ALPHA_FORMAT_PRE		0x308C	/* EGL_ALPHA_FORMAT value */
+    ''' OpenVG alpha formats '''
+    EGL_VG_ALPHA_FORMAT_NONPRE = 0x308B # ''' EGL_ALPHA_FORMAT value ''' 
+    EGL_VG_ALPHA_FORMAT_PRE = 0x308C # ''' EGL_ALPHA_FORMAT value ''' 
 
-    /* Constant scale factor by which fractional display resolutions &
+    ''' Constant scale factor by which fractional display resolutions &
      * aspect ratio are scaled when queried as integer values.
-     */
-    #define EGL_DISPLAY_SCALING		10000
+     '''
+    EGL_DISPLAY_SCALING = 10000 # 
 
-    /* Unknown display resolution/aspect ratio */
-    #define EGL_UNKNOWN			((EGLint)-1)
+    ''' Unknown display resolution/aspect ratio '''
+    EGL_UNKNOWN = -1 # 
 
-    /* Back buffer swap behaviors */
-    #define EGL_BUFFER_PRESERVED		0x3094	/* EGL_SWAP_BEHAVIOR value */
-    #define EGL_BUFFER_DESTROYED		0x3095	/* EGL_SWAP_BEHAVIOR value */
+    ''' Back buffer swap behaviors '''
+    EGL_BUFFER_PRESERVED = 0x3094 # ''' EGL_SWAP_BEHAVIOR value ''' 
+    EGL_BUFFER_DESTROYED = 0x3095 # ''' EGL_SWAP_BEHAVIOR value ''' 
 
-    /* CreatePbufferFromClientBuffer buffer types */
-    #define EGL_OPENVG_IMAGE		0x3096
+    ''' CreatePbufferFromClientBuffer buffer types '''
+    EGL_OPENVG_IMAGE = 0x3096 # 
 
-    /* QueryContext targets */
-    #define EGL_CONTEXT_CLIENT_TYPE		0x3097
+    ''' QueryContext targets '''
+    EGL_CONTEXT_CLIENT_TYPE = 0x3097 # 
 
-    /* CreateContext attributes */
-    #define EGL_CONTEXT_CLIENT_VERSION	0x3098
+    ''' CreateContext attributes '''
+    EGL_CONTEXT_CLIENT_VERSION = 0x3098 # 
 
-    /* Multisample resolution behaviors */
-    #define EGL_MULTISAMPLE_RESOLVE_DEFAULT 0x309A	/* EGL_MULTISAMPLE_RESOLVE value */
-    #define EGL_MULTISAMPLE_RESOLVE_BOX	0x309B	/* EGL_MULTISAMPLE_RESOLVE value */
+    ''' Multisample resolution behaviors '''
+    EGL_MULTISAMPLE_RESOLVE_DEFAULT = 0x309A # ''' EGL_MULTISAMPLE_RESOLVE value ''' 
+    EGL_MULTISAMPLE_RESOLVE_BOX = 0x309B # ''' EGL_MULTISAMPLE_RESOLVE value ''' 
 
-    /* GetCurrentSurface targets */
-    #define EGL_DRAW			0x3059
-    #define EGL_READ			0x305A
+    ''' GetCurrentSurface targets '''
+    EGL_DRAW = 0x3059 # 
+    EGL_READ = 0x305A # 
 
-    /* WaitNative engines */
-    #define EGL_CORE_NATIVE_ENGINE		0x305B
+    ''' WaitNative engines '''
+    EGL_CORE_NATIVE_ENGINE = 0x305B # 
 
-    /* EGL 1.2 tokens renamed for consistency in EGL 1.3 */
-    #define EGL_COLORSPACE			EGL_VG_COLORSPACE
-    #define EGL_ALPHA_FORMAT		EGL_VG_ALPHA_FORMAT
-    #define EGL_COLORSPACE_sRGB		EGL_VG_COLORSPACE_sRGB
-    #define EGL_COLORSPACE_LINEAR		EGL_VG_COLORSPACE_LINEAR
-    #define EGL_ALPHA_FORMAT_NONPRE		EGL_VG_ALPHA_FORMAT_NONPRE
-    #define EGL_ALPHA_FORMAT_PRE		EGL_VG_ALPHA_FORMAT_PRE
-
+    ''' EGL 1.2 tokens renamed for consistency in EGL 1.3 '''
+    EGL_COLORSPACE = EGL_VG_COLORSPACE # 
+    EGL_ALPHA_FORMAT = EGL_VG_ALPHA_FORMAT # 
+    EGL_COLORSPACE_sRGB = EGL_VG_COLORSPACE_sRGB # 
+    EGL_COLORSPACE_LINEAR = EGL_VG_COLORSPACE_LINEAR # 
+    EGL_ALPHA_FORMAT_NONPRE = EGL_VG_ALPHA_FORMAT_NONPRE # 
+    EGL_ALPHA_FORMAT_PRE = EGL_VG_ALPHA_FORMAT_PRE # 
 
 
     EGL_OPENGL_ES_API = 0x30A0
@@ -255,21 +253,27 @@ class _constants:
     EGL_MATCH_NATIVE_PIXMAP	=	0x3041	#/* Pseudo-attribute (not queryable) */
     EGL_CONFORMANT	=		0x3042
     
+EGL_FALSE = _constants.EGL_FALSE
+    
+global _context_reg
 _context_reg = {}
     
 cdef class Context:
     cdef EGLContext _eglcontext
     
+global _display_reg
 _display_reg = {}
     
 cdef class Display:
     cdef EGLDisplay _egldisplay
     
+global _surface_reg
 _surface_reg = {}
     
 cdef class Surface:
     cdef EGLSurface _eglsurface
     
+global _config_reg
 _config_reg = {}
 
 cdef class Config:
@@ -278,21 +282,21 @@ cdef class Config:
 
 class EGLError(Exception):
     codes = {
-        0x3000 : 'EGL_SUCCESS'			
-        0x3001 : 'EGL_NOT_INITIALIZED'
-        0x3002 : 'EGL_BAD_ACCESS'			
-        0x3003 : 'EGL_BAD_ALLOC'			
-        0x3004 : 'EGL_BAD_ATTRIBUTE'		
-        0x3005 : 'EGL_BAD_CONFIG'			
-        0x3006 : 'EGL_BAD_CONTEXT'			
-        0x3007 : 'EGL_BAD_CURRENT_SURFACE'		
-        0x3008 : 'EGL_BAD_DISPLAY'			
-        0x3009 : 'EGL_BAD_MATCH'			
-        0x300A : 'EGL_BAD_NATIVE_PIXMAP'		
-        0x300B : 'EGL_BAD_NATIVE_WINDOW'		
-        0x300C : 'EGL_BAD_PARAMETER'		
-        0x300D : 'EGL_BAD_SURFACE'			
-        0x300E : 'EGL_CONTEXT_LOST'			
+        0x3000 : 'EGL_SUCCESS'			,
+        0x3001 : 'EGL_NOT_INITIALIZED',
+        0x3002 : 'EGL_BAD_ACCESS'		,	
+        0x3003 : 'EGL_BAD_ALLOC'		,	
+        0x3004 : 'EGL_BAD_ATTRIBUTE'	,	
+        0x3005 : 'EGL_BAD_CONFIG'		,	
+        0x3006 : 'EGL_BAD_CONTEXT'		,	
+        0x3007 : 'EGL_BAD_CURRENT_SURFACE',		
+        0x3008 : 'EGL_BAD_DISPLAY'		,	
+        0x3009 : 'EGL_BAD_MATCH'			,
+        0x300A : 'EGL_BAD_NATIVE_PIXMAP',		
+        0x300B : 'EGL_BAD_NATIVE_WINDOW',		
+        0x300C : 'EGL_BAD_PARAMETER'	,	
+        0x300D : 'EGL_BAD_SURFACE'		,	
+        0x300E : 'EGL_CONTEXT_LOST'		,	
         }
 
 def raise_egl_error():
@@ -308,12 +312,12 @@ def BindAPI(EGLenum api):
     ret = eglBindAPI(api)
     return bool(ret)
 
-def GetDisplay(EGLNativeDisplayType display_id):
+def GetDisplay(unsigned int display_id):
     cdef:
         EGLDisplay display
         Display py_display
-    display = eglGetDisplay(display_id)
-    if display == EGL_NO_DISPLAY:
+    display = eglGetDisplay(<EGLNativeDisplayType>display_id)
+    if display == <EGLDisplay>0:
         raise EGLError("No display available")
     py_display = Display()
     py_display._egldisplay = display
@@ -342,7 +346,7 @@ def QueryString(Display dpy, EGLint name):
 def GetConfigs(Display dpy):
     cdef:
         EGLint numConfigs = -1
-    if eglGetConfigs(dpy._egldisplay, NULL, 0, &numConfigs)==EGL_FALSEL
+    if eglGetConfigs(dpy._egldisplay, NULL, 0, &numConfigs)==EGL_FALSE:
         raise_egl_error()
     return int(numConfigs)
 
@@ -353,7 +357,7 @@ def GetConfigs(Display dpy):
 def ChooseConfig(Display dpy, list attrib_list, EGLint config_size):
     cdef:
         EGLConfig *configs
-        EGLint num_configs
+        EGLint num_config
         EGLint *attribs
         int i, n_attrib=len(attrib_list)
         
@@ -383,7 +387,7 @@ def GetConfigAttrib(Display dpy, Config config, EGLint attribute):
         raise_egl_error()
     return int(value)
     
-def CreateWindowSurface(Display dpy, Config config, EGLNativeWindowType win,
+def CreateWindowSurface(Display dpy, Config config, unsigned int win,
                         list attrib_list):
     cdef:
         EGLSurface surf
@@ -396,48 +400,177 @@ def CreateWindowSurface(Display dpy, Config config, EGLNativeWindowType win,
             attribs[i] = attrib_list[i]
         
         surf = eglCreateWindowSurface(dpy._egldisplay, config._eglconfig,
-                      win, attribs)
-        if surf == EGL_NO_SURFACE:
+                      <EGLNativeWindowType>win, attribs)
+        if surf == <EGLSurface>0:
             raise_egl_error()
         py_surf = Surface()
         py_surf._eglsurface = surf
+        _surface_reg[<int>surf] = py_surf
         return py_surf
     finally:
         free(attribs)
                   
-                  
-    EGLSurface eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
-				   const EGLint *attrib_list)
-    EGLSurface eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
-				  EGLNativePixmapType pixmap,
-				  const EGLint *attrib_list)
-    EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
-    EGLBoolean eglQuerySurface(EGLDisplay dpy, EGLSurface surface,
-			   EGLint attribute, EGLint *value)
-    EGLenum eglQueryAPI()
-    EGLBoolean eglWaitClient()
-    EGLBoolean eglReleaseThread()
-    EGLSurface eglCreatePbufferFromClientBuffer(
-	      EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer,
-	      EGLConfig config, EGLint *attrib_list)
-    EGLBoolean eglSurfaceAttrib(EGLDisplay dpy, EGLSurface surface,
-			    EGLint attribute, EGLint value)
-    EGLBoolean eglBindTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
-    EGLBoolean eglReleaseTexImage(EGLDisplay dpy, EGLSurface surface, EGLint buffer)
-    EGLBoolean eglSwapInterval(EGLDisplay dpy, EGLint interval)
-    EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config,
-			    EGLContext share_context,
-			    EGLint *attrib_list)
-    EGLBoolean eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
-    EGLBoolean eglMakeCurrent(EGLDisplay dpy, EGLSurface draw,
-			  EGLSurface read, EGLContext ctx)
-    EGLContext eglGetCurrentContext()
-    EGLSurface eglGetCurrentSurface(EGLint readdraw)
-    EGLDisplay eglGetCurrentDisplay()
-    EGLBoolean eglQueryContext(EGLDisplay dpy, EGLContext ctx,
-			   EGLint attribute, EGLint *value)
-    EGLBoolean eglWaitGL()
-    EGLBoolean eglWaitNative(EGLint engine)
-    EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
-    EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
-			  EGLNativePixmapType target)
+
+def CreatePbufferSurface(Display dpy, Config config, list attrib_list):
+    cdef:
+        EGLSurface surf
+        EGLint *attribs
+        int i, n_attrib=len(attrib_list)
+        
+    attribs = <EGLint*>malloc(sizeof(EGLint)*n_attrib)
+    try:
+        for i in xrange(n_attrib):
+            attribs[i] = attrib_list[i]
+        
+        surf = eglCreatePbufferSurface(dpy._egldisplay, config._eglconfig,
+                      attribs)
+        if surf == <EGLSurface>0:
+            raise_egl_error()
+        py_surf = Surface()
+        py_surf._eglsurface = surf
+        _surface_reg[<int>surf] = py_surf
+        return py_surf
+    finally:
+        free(attribs)
+    
+#def CreatePixmapSurface(Display dpy, Config config, pixmap, list attrib_list):
+#    cdef:
+#        EGLSurface surf
+#        EGLint *attribs
+#        int i, n_attrib=len(attrib_list)
+#        
+#    attribs = <EGLint*>malloc(sizeof(EGLint)*n_attrib)
+#    try:
+#        for i in xrange(n_attrib):
+#            attribs[i] = attrib_list[i]
+#        
+#        surf = eglCreatePixmapSurface(dpy._egldisplay, config._eglconfig,
+#                      pixmap, attribs)
+#        if surf == <EGLSurface>0:
+#            raise_egl_error()
+#        py_surf = Surface()
+#        py_surf._eglsurface = surf
+#        _surface_rep[<int>surf] = py_surf
+#        return py_surf
+#    finally:
+#        free(attribs)
+        
+def DestroySurface(Display dpy, Surface surf):
+    if eglDestroySurface(dpy._egldisplay, surf._eglsurface) == EGL_FALSE:
+        raise_egl_error()
+    del _surface_reg[<int>(surf._eglsurface)]
+    
+def QuerySurface(Display dpy, Surface surf, EGLint attrib):
+    cdef EGLint ret
+    if eglQuerySurface(dpy._egldisplay, surf._eglsurface,
+			   attrib, &ret) == EGL_FALSE:
+        raise_egl_error()
+    return ret
+        
+def QueryAPI():
+    return eglQueryAPI()
+    
+def WaitClient():
+    if eglWaitClient() == EGL_FALSE:
+        raise_egl_error()
+    
+def ReleaseThread():
+    if eglReleaseThread() == EGL_FALSE:
+        raise_egl_error()
+
+####     
+#def CreatePbufferFromClientBuffer(Display dpy, EGLenum buftype, buf,
+#                    Config config, list attrib_list):
+#    FIXME
+#    EGLSurface eglCreatePbufferFromClientBuffer(
+#	      EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer,
+#	      EGLConfig config, EGLint *attrib_list)
+          
+          
+def SurfaceAttrib(Display dpy, Surface surf, EGLint attrib, EGLint value):
+    cdef EGLBoolean ret
+    ret = eglSurfaceAttrib(dpy._egldisplay, surf._eglsurface,
+                            attrib, value)
+    if ret==EGL_FALSE: raise_egl_error()
+    
+def BindTexImage(Display dpy, Surface surf, EGLint buf):
+    if eglBindTexImage(dpy._egldisplay, surf._eglsurface, buf) == EGL_FALSE:
+        raise_egl_error()
+    
+def ReleaseTexImage(Display dpy, Surface surf, EGLint buf):
+    if eglReleaseTexImage(dpy._egldisplay, surf._eglsurface, buf) == EGL_FALSE:
+        raise_egl_error()
+    
+def SwapInterval(Display dpy, EGLint interval):
+    if eglSwapInterval(dpy._egldisplay, interval) == EGL_FALSE:
+        raise_egl_error()
+    
+def CreateContext(Display dpy, Config config, Context share_ctx, list attrib_list):
+    cdef:
+        EGLContext _ctx
+        EGLint *attribs
+        int i, n_attrib=len(attrib_list)
+        
+    attribs = <EGLint*>malloc(sizeof(EGLint)*n_attrib)
+    try:
+        for i in xrange(n_attrib):
+            attribs[i] = attrib_list[i]
+
+        _ctx = eglCreateContext(dpy._egldisplay, config._eglconfig,
+                    share_ctx._eglcontext, attribs)
+        pyctx = Context()
+        pyctx._eglcontext = _ctx
+        _context_reg[<int>_ctx] = pyctx
+        return pyctx
+    finally:
+        free(attribs)
+                    
+def DestroyContext(Display dpy, Context ctx):
+    if eglDestroyContext(dpy._egldisplay, ctx._eglcontext) == EGL_FALSE:
+        raise_egl_error()
+    del _context_reg[<int>(ctx._eglcontext)]
+    
+def MakeCurrent(Display dpy, Surface draw, Surface read, Context ctx):
+    if eglMakeCurrent(dpy._egldisplay, draw._eglsurface,
+			  read._eglsurface, ctx._eglcontext) == EGL_FALSE:
+        raise_egl_error()
+              
+def GetCurrentContext():
+    cdef EGLContext ctx
+    ctx = eglGetCurrentContext()
+    return _context_reg[<int>ctx]
+    
+def GetCurrentSurface(EGLint readdraw):
+    cdef EGLSurface surf
+    surf = eglGetCurrentSurface(readdraw)
+    return _surface_reg[<int>surf]
+    
+def GetCurrentDisplay():
+    cdef EGLDisplay dpy
+    dpy = eglGetCurrentDisplay()
+    return _display_reg[<int>dpy]
+    
+def QueryContext(Display dpy, Context ctx, EGLint attrib):
+    cdef EGLint value
+    if eglQueryContext(dpy._egldisplay, ctx._eglcontext,
+                        attrib, &value) == EGL_FALSE:
+        raise_egl_error()
+    return value
+    
+def WaitGL():
+    if eglWaitGL() == EGL_FALSE:
+        raise_egl_error()
+        
+def WaitNative(EGLint engine):
+    if eglWaitNative(engine) == EGL_FALSE:
+        raise_egl_error()
+    
+def SwapBuffers(Display dpy, Surface surf):
+    if eglSwapBuffers(dpy._egldisplay, surf._eglsurface) == EGL_FALSE:
+        raise_egl_error()
+    
+
+#### Don't know what a NativePixmapType is or how to make one ###
+#def CopyBuffers(Display dpy, Surface surf, target):
+#    EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
+#			  EGLNativePixmapType target)
