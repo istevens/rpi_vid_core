@@ -309,7 +309,7 @@ class EGLError(Exception):
 cdef class NativeWindow:
     cdef EGL_DISPMANX_WINDOW_T _window
     
-    def __cinit__(self, ElementHandle element, int width, int height)
+    def __cinit__(self, ElementHandle element, int width, int height):
         self._window.element = element._handle
         self._window.width = width
         self._window.height = height
@@ -403,20 +403,20 @@ def GetConfigAttrib(Display dpy, Config config, EGLint attribute):
         raise_egl_error()
     return int(value)
     
-def CreateWindowSurface(Display dpy, Config config, unsigned int win,
-                        list attrib_list):
+def CreateWindowSurface(Display dpy, Config config, NativeWindow win,
+                        list attrib_list=[]):
     cdef:
         EGLSurface surf
-        EGLint *attribs
+        EGLint *attribs=NULL
         int i, n_attrib=len(attrib_list)
         
-    attribs = <EGLint*>malloc(sizeof(EGLint)*n_attrib)
-    try:
+    if n_attrib > 0:
+        attribs = <EGLint*>malloc(sizeof(EGLint)*n_attrib)
         for i in xrange(n_attrib):
             attribs[i] = attrib_list[i]
-        
+    try:
         surf = eglCreateWindowSurface(dpy._egldisplay, config._eglconfig,
-                      <EGLNativeWindowType>win, attribs)
+                      <EGLNativeWindowType>(&(win._window)), attribs) #FIXME
         if surf == <EGLSurface>0:
             raise_egl_error()
         py_surf = Surface()
@@ -521,20 +521,21 @@ def SwapInterval(Display dpy, EGLint interval):
     if eglSwapInterval(dpy._egldisplay, interval) == EGL_FALSE:
         raise_egl_error()
     
-def CreateContext(Display dpy, Config config, object share_ctx, list attrib_list):
+def CreateContext(Display dpy, Config config, object share_ctx, list attrib_list=[]):
     cdef:
         EGLContext _ctx, _share_ctx
-        EGLint *attribs
+        EGLint *attribs=NULL
         int i, n_attrib=len(attrib_list)
         
     if share_ctx is None:
-        _share_ctx = NULL
+        _share_ctx = <EGLContext>0
     elif isinstance(share_ctx, Context):
         _share_ctx = (<Context>share_ctx)._eglcontext
     else:
         raise ValueError("3rd argument (share context) must be of type Context or None")
         
-    attribs = <EGLint*>malloc(sizeof(EGLint)*n_attrib)
+    if n_attrib > 0:
+        attribs = <EGLint*>malloc(sizeof(EGLint)*n_attrib)
     try:
         for i in xrange(n_attrib):
             attribs[i] = attrib_list[i]
