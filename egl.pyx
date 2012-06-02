@@ -1,5 +1,6 @@
 
 from libc.stdlib cimport malloc, free
+from bcm cimport DISPMANX_ELEMENT_HANDLE_T, ElementHandle
 
 cdef extern from "/opt/vc/include/EGL/egl.h":
     ctypedef int EGLint ###maybe wrong
@@ -13,6 +14,11 @@ cdef extern from "/opt/vc/include/EGL/egl.h":
     ctypedef void *EGLDisplay
     ctypedef void *EGLSurface
     ctypedef void *EGLClientBuffer
+    
+    ctypedef struct EGL_DISPMANX_WINDOW_T:
+        DISPMANX_ELEMENT_HANDLE_T element
+        int width   #/* This is necessary because dispmanx elements are not queriable. */
+        int height
     
     EGLint eglGetError()
     EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
@@ -298,6 +304,16 @@ class EGLError(Exception):
         0x300D : 'EGL_BAD_SURFACE'		,	
         0x300E : 'EGL_CONTEXT_LOST'		,	
         }
+        
+        
+cdef class NativeWindow:
+    cdef EGL_DISPMANX_WINDOW_T _window
+    
+    def __cinit__(self, ElementHandle element, int width, int height)
+        self._window.element = element._handle
+        self._window.width = width
+        self._window.height = height
+        
 
 def raise_egl_error():
     err_code = getError()
@@ -505,11 +521,18 @@ def SwapInterval(Display dpy, EGLint interval):
     if eglSwapInterval(dpy._egldisplay, interval) == EGL_FALSE:
         raise_egl_error()
     
-def CreateContext(Display dpy, Config config, Context share_ctx, list attrib_list):
+def CreateContext(Display dpy, Config config, object share_ctx, list attrib_list):
     cdef:
-        EGLContext _ctx
+        EGLContext _ctx, _share_ctx
         EGLint *attribs
         int i, n_attrib=len(attrib_list)
+        
+    if share_ctx is None:
+        _share_ctx = NULL
+    elif isinstance(share_ctx, Context):
+        _share_ctx = (<Context>share_ctx)._eglcontext
+    else:
+        raise ValueError("3rd argument (share context) must be of type Context or None")
         
     attribs = <EGLint*>malloc(sizeof(EGLint)*n_attrib)
     try:
@@ -517,7 +540,7 @@ def CreateContext(Display dpy, Config config, Context share_ctx, list attrib_lis
             attribs[i] = attrib_list[i]
 
         _ctx = eglCreateContext(dpy._egldisplay, config._eglconfig,
-                    share_ctx._eglcontext, attribs)
+                    _share_ctx, attribs)
         pyctx = Context()
         pyctx._eglcontext = _ctx
         _context_reg[<int>_ctx] = pyctx
