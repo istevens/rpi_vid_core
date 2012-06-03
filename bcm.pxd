@@ -47,6 +47,7 @@ cdef extern from "/opt/vc/include/bcm_host.h":
                                                         DISPMANX_TRANSFORM_T transform )
     int vc_dispmanx_update_submit_sync( DISPMANX_UPDATE_HANDLE_T update )
 
+cdef public uint32_t DISPMANX_PROTECTION_NONE = 0
 
 cdef class Rect:
     cdef:

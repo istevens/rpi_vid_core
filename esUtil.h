@@ -102,6 +102,7 @@ typedef struct _escontext
 //
 
 //~ GLBoolean ESUTIL_API WinCreate2(EGL_DISPMANX_WINDOW_T *nativewindow_p);
+EGLBoolean WinCreate2(EGL_DISPMANX_WINDOW_T *nativewindow_p)
 
 //~ EGLBoolean ESUTIL_API CreateEGLContext2( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
                               //~ EGLContext* eglContext, EGLSurface* eglSurface);

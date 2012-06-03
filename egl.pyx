@@ -1,6 +1,7 @@
 
 from libc.stdlib cimport malloc, free
 from bcm cimport DISPMANX_ELEMENT_HANDLE_T, ElementHandle
+cimport bcm
 
 cdef extern from "/opt/vc/include/EGL/egl.h":
     ctypedef int EGLint ###maybe wrong
@@ -598,3 +599,56 @@ def SwapBuffers(Display dpy, Surface surf):
 #def CopyBuffers(Display dpy, Surface surf, target):
 #    EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
 #			  EGLNativePixmapType target)
+
+
+def WinCreate2(NativeWindow nativewindow): 
+    cdef:
+        bcm.int32_t success = 0
+        bcm.DISPMANX_ELEMENT_HANDLE_T dispman_element
+        bcm.DISPMANX_DISPLAY_HANDLE_T dispman_display
+        bcm.DISPMANX_UPDATE_HANDLE_T dispman_update
+        bcm.VC_RECT_T dst_rect
+        bcm.VC_RECT_T src_rect
+        bcm.uint32_t display_width
+        bcm.uint32_t display_height
+
+    ## create an EGL window surface, passing context width/height
+    success = bcm.c_get_display_size(0, ## /* LCD */
+                                            &display_width, 
+                                            &display_height);
+    if ( success < 0 ):
+        raise RuntimeError("Couldn't get display size")
+   
+    ## You can hardcode the resolution here:
+    display_width = 640
+    display_height = 480
+
+    dst_rect.x = 0
+    dst_rect.y = 0
+    dst_rect.width = display_width
+    dst_rect.height = display_height
+      
+    src_rect.x = 0
+    src_rect.y = 0
+    src_rect.width = display_width << 16
+    src_rect.height = display_height << 16
+
+    dispman_display = bcm.vc_dispmanx_display_open( 0 )
+    dispman_update = bcm.vc_dispmanx_update_start( 0 )
+         
+    dispman_element = bcm.vc_dispmanx_element_add ( dispman_update, dispman_display,
+        0, ##/*layer*/, 
+        &dst_rect, 
+        <bcm.DISPMANX_RESOURCE_HANDLE_T>0, ##/*src*/,
+        &src_rect, 
+        <bcm.DISPMANX_PROTECTION_T>0, 
+        <bcm.VC_DISPMANX_ALPHA_T *>0, ##/*alpha*/
+        <bcm.DISPMANX_CLAMP_T *>0, ##/*clamp*/
+        <bcm.DISPMANX_TRANSFORM_T>0) ##/*transform*/
+      
+    nativewindow._window.element = dispman_element
+    nativewindow._window.width = display_width
+    nativewindow._window.height = display_height
+    bcm.vc_dispmanx_update_submit_sync( dispman_update )
+    return True
+    

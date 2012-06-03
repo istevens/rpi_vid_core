@@ -10,6 +10,8 @@ _c = egl._constants
 
 bcm.host_init()
 
+win = egl.NativeWindow(bcm.ElementHandle(), 0, 0)
+
 stuff = {}
 
 
@@ -22,6 +24,7 @@ def create_window(title, width, height, flags, api ):
     display = bcm.display_open(0)
     update = bcm.update_start(0)
     element = bcm.element_add(update, display, 0, dst, src)
+    global win
     win = egl.NativeWindow(element, W, H)
     bcm.update_submit_sync(update)
     stuff['bcm_display']=display
@@ -70,7 +73,8 @@ def mainloop(display, surface, context, draw_func):
         
 if __name__=="__main__":
     WINDOW_RGB=0
-    win = create_window("Hello VG", 320, 240, WINDOW_RGB, egl._constants.EGL_OPENVG_API )
+    #win = create_window("Hello VG", 320, 240, WINDOW_RGB, egl._constants.EGL_OPENVG_API )
+    egl.WinCreate2(win)
     dpy, surf, ctx = make_egl_context(win, 0)
     stuff['egl_context']=ctx
     def draw():

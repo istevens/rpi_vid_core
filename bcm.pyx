@@ -1,7 +1,6 @@
 
 
 
-DISPMANX_PROTECTION_NONE = 0
 
 cdef class Rect:
     def __cinit__(self, int32_t x, int32_t y, int32_t width, int32_t height):
