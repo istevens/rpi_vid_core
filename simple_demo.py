@@ -10,27 +10,18 @@ _c = egl._constants
 
 bcm.host_init()
 
-win = egl.NativeWindow(bcm.ElementHandle(), 0, 0)
 
-stuff = {}
-
-
-def create_window(title, width, height, flags, api ):
+def create_window(width, height):
     W,H = bcm.graphics_get_display_size(0)
     print "Width, Height: %d, %d"%(W,H)
-    W,H=width,height
+    W,H=width,height #width,height
     dst = bcm.Rect(0,0,W,H)
     src = bcm.Rect(0,0,W<<16,H<<16)
-    display = bcm.display_open(0)
-    update = bcm.update_start(0)
-    element = bcm.element_add(update, display, 0, dst, src)
-    global win
+    display = egl.bcm_display_open(0)
+    update = egl.bcm_update_start(0)
+    element = egl.bcm_element_add(update, display, 0, dst, src)
     win = egl.NativeWindow(element, W, H)
-    bcm.update_submit_sync(update)
-    stuff['bcm_display']=display
-    stuff['bcm_update']=update
-    stuff['bcm_element']=element
-    stuff['rects']=(dst,src)
+    egl.bcm_update_submit_sync(update)
     return win
         
     
@@ -54,8 +45,6 @@ def make_egl_context(win, flags):
     config = egl.ChooseConfig(display, attribs, 1)[0]
     surface = egl.CreateWindowSurface(display, config, win)
     context = egl.CreateContext(display, config, None)
-    
-    print "check:", egl.QueryContext(display, context, _c.EGL_CONTEXT_CLIENT_TYPE)
     egl.MakeCurrent(display, surface, surface, context)
     return (display, surface, context)
     
@@ -64,7 +53,6 @@ def mainloop(display, surface, context, draw_func):
     try:
         for i in xrange(20):
             time.sleep(0.1) #so we don't spin the CPU too much
-            egl.MakeCurrent(display, surface, surface, context)
             draw_func()
             egl.SwapBuffers(display, surface)
     except KeyboardInterupt:
@@ -73,15 +61,15 @@ def mainloop(display, surface, context, draw_func):
         
 if __name__=="__main__":
     WINDOW_RGB=0
-    #win = create_window("Hello VG", 320, 240, WINDOW_RGB, egl._constants.EGL_OPENVG_API )
-    egl.WinCreate2(win)
+    win = create_window( 620, 430 )
     dpy, surf, ctx = make_egl_context(win, 0)
-    stuff['egl_context']=ctx
+
     def draw():
         print "beging drawing ...",
         vg.SetClearColour(1.0,0.0,1.0,1.0)
         vg.Clear(0,0,300,200)
         print "...end drawing"
+        
     mainloop(dpy, surf, ctx, draw)
     
     

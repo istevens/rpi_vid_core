@@ -599,16 +599,63 @@ def SwapBuffers(Display dpy, Surface surf):
 #def CopyBuffers(Display dpy, Surface surf, target):
 #    EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
 #			  EGLNativePixmapType target)
+def bcm_display_open(bcm.uint32_t device):
+    cdef:
+        bcm.DISPMANX_DISPLAY_HANDLE_T disp
+        bcm.DisplayHandle D
+    disp = bcm.vc_dispmanx_display_open( 0 )
+    if disp == 0:
+        raise bcm.BCMDisplayException("Couldn't open handle to display")
+    D = bcm.DisplayHandle()
+    D._handle = disp
+    return D
+    
+def bcm_update_start(bcm.int32_t priority):
+    cdef:
+        bcm.DISPMANX_UPDATE_HANDLE_T hdl
+        bcm.UpdateHandle U
+    hdl = bcm.vc_dispmanx_update_start( priority )
+    if hdl == 0:
+        raise bcm.BCMDisplayException("Couldn't open handle to update-start")
+    U = bcm.UpdateHandle()
+    U._handle = hdl
+    return U
+    
+def bcm_element_add(bcm.UpdateHandle update, 
+                bcm.DisplayHandle display, 
+                bcm.int32_t layer,
+                bcm.Rect dest_rect,
+                bcm.Rect src_rect):
+    cdef:
+        bcm.DISPMANX_ELEMENT_HANDLE_T elem
+        bcm.ElementHandle E
+    elem = bcm.vc_dispmanx_element_add (update._handle, 
+                                     display._handle,
+                                     layer, 
+                                     &(dest_rect._vc_rect), 
+                                     0, #DISPMANX_RESOURCE_HANDLE_T src,
+                                     &(src_rect._vc_rect), 
+                                     0, #DISPMANX_PROTECTION_T protection, 
+                                     <bcm.VC_DISPMANX_ALPHA_T *>0, #VC_DISPMANX_ALPHA_T *alpha,
+                                     <bcm.DISPMANX_CLAMP_T *>0, #DISPMANX_CLAMP_T *clamp, 
+                                     <bcm.DISPMANX_TRANSFORM_T>0) #DISPMANX_TRANSFORM_T transform
+    E = bcm.ElementHandle()
+    E._handle = elem
+    return E
+    
+def bcm_update_submit_sync(bcm.UpdateHandle update):
+    return bcm.vc_dispmanx_update_submit_sync( update._handle )
 
-
-def WinCreate2(NativeWindow nativewindow): 
+def WinCreate2(NativeWindow nativewindow, bcm.DisplayHandle display, 
+                    bcm.UpdateHandle update, 
+                    bcm.Rect dst, bcm.Rect src): 
     cdef:
         bcm.int32_t success = 0
         bcm.DISPMANX_ELEMENT_HANDLE_T dispman_element
         bcm.DISPMANX_DISPLAY_HANDLE_T dispman_display
         bcm.DISPMANX_UPDATE_HANDLE_T dispman_update
-        bcm.VC_RECT_T dst_rect
-        bcm.VC_RECT_T src_rect
+        #bcm.VC_RECT_T dst_rect
+        #bcm.VC_RECT_T src_rect
         bcm.uint32_t display_width
         bcm.uint32_t display_height
 
@@ -619,36 +666,23 @@ def WinCreate2(NativeWindow nativewindow):
     if ( success < 0 ):
         raise RuntimeError("Couldn't get display size")
    
-    ## You can hardcode the resolution here:
-    display_width = 640
-    display_height = 480
-
-    dst_rect.x = 0
-    dst_rect.y = 0
-    dst_rect.width = display_width
-    dst_rect.height = display_height
-      
-    src_rect.x = 0
-    src_rect.y = 0
-    src_rect.width = display_width << 16
-    src_rect.height = display_height << 16
-
-    dispman_display = bcm.vc_dispmanx_display_open( 0 )
-    dispman_update = bcm.vc_dispmanx_update_start( 0 )
+    dispman_display = display._handle
+    dispman_update = update._handle 
+    #dispman_update = bcm.vc_dispmanx_update_start( 0 )
          
     dispman_element = bcm.vc_dispmanx_element_add ( dispman_update, dispman_display,
         0, ##/*layer*/, 
-        &dst_rect, 
+        &(dst._vc_rect), 
         <bcm.DISPMANX_RESOURCE_HANDLE_T>0, ##/*src*/,
-        &src_rect, 
+        &(src._vc_rect), 
         <bcm.DISPMANX_PROTECTION_T>0, 
         <bcm.VC_DISPMANX_ALPHA_T *>0, ##/*alpha*/
         <bcm.DISPMANX_CLAMP_T *>0, ##/*clamp*/
         <bcm.DISPMANX_TRANSFORM_T>0) ##/*transform*/
       
     nativewindow._window.element = dispman_element
-    nativewindow._window.width = display_width
-    nativewindow._window.height = display_height
+    nativewindow._window.width = dst._vc_rect.width
+    nativewindow._window.height = dst._vc_rect.height
     bcm.vc_dispmanx_update_submit_sync( dispman_update )
     return True
     

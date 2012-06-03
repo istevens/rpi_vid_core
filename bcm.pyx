@@ -77,7 +77,11 @@ def graphics_get_display_size(uint16_t number):
 def display_open(uint32_t device):
     cdef:
         DISPMANX_DISPLAY_HANDLE_T disp
-    disp = vc_dispmanx_display_open( device )
+        DisplayHandle D
+    disp = vc_dispmanx_display_open( 0 )
+    print "openned display handle:", disp
+    if disp == 0:
+        raise BCMDisplayException("Couldn't open handle to display")
     D = DisplayHandle()
     D._handle = disp
     return D
@@ -102,7 +106,7 @@ def element_add(UpdateHandle update,
                                      &(dest_rect._vc_rect), 
                                      0, #DISPMANX_RESOURCE_HANDLE_T src,
                                      &(src_rect._vc_rect), 
-                                     DISPMANX_PROTECTION_NONE, #DISPMANX_PROTECTION_T protection, 
+                                     0, #DISPMANX_PROTECTION_T protection, 
                                      <VC_DISPMANX_ALPHA_T *>0, #VC_DISPMANX_ALPHA_T *alpha,
                                      <DISPMANX_CLAMP_T *>0, #DISPMANX_CLAMP_T *clamp, 
                                      <DISPMANX_TRANSFORM_T>0) #DISPMANX_TRANSFORM_T transform
