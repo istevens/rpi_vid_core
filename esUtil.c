@@ -137,6 +137,106 @@ EGLBoolean CreateEGLContext ( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
 } 
 
 
+EGLBoolean CreateEGLContext2( EGLNativeWindowType hWnd, EGLDisplay* eglDisplay,
+                              EGLContext* eglContext, EGLSurface* eglSurface)
+{
+   EGLint numConfigs;
+   EGLint majorVersion;
+   EGLint minorVersion;
+   EGLDisplay display;
+   EGLContext context;
+   EGLSurface surface;
+   EGLConfig config;
+   EGLint attribList[] = {
+       EGL_RED_SIZE,       5,
+       EGL_GREEN_SIZE,     6,
+       EGL_BLUE_SIZE,      5,
+       EGL_ALPHA_SIZE,     EGL_DONT_CARE,
+       EGL_NONE
+   };
+   
+   
+   #ifndef RPI_NO_X
+   //EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE, EGL_NONE };
+   EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE, EGL_NONE };
+   #else
+   EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+   #endif
+   
+   
+   // Get Display
+   #ifndef RPI_NO_X
+   display = eglGetDisplay((EGLNativeDisplayType)x_display);
+   if ( display == EGL_NO_DISPLAY )
+   {
+      return EGL_FALSE;
+   }
+   #else
+   display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+   if ( display == EGL_NO_DISPLAY )
+   {
+      return EGL_FALSE;
+   }
+   #endif
+
+   // Initialize EGL
+   if ( !eglInitialize(display, &majorVersion, &minorVersion) )
+   {
+      return EGL_FALSE;
+   }
+    
+   // set API
+   if (!eglBindAPI(EGL_OPENVG_API))
+   {
+       printf("failed to bind API\n");
+       return EGL_FALSE;
+   }
+    
+   // Get configs
+   if ( !eglGetConfigs(display, NULL, 0, &numConfigs) )
+   {
+       printf("failed to get configs\n");
+      return EGL_FALSE;
+   }
+    
+   // Choose config
+   if ( !eglChooseConfig(display, attribList, &config, 1, &numConfigs) )
+   {
+       printf("failed to choose config\n");
+      return EGL_FALSE;
+   }
+
+   // Create a surface
+   surface = eglCreateWindowSurface(display, config, (EGLNativeWindowType)hWnd, NULL);
+   if ( surface == EGL_NO_SURFACE )
+   {
+       printf("failed to make surface\n");
+      return EGL_FALSE;
+   }
+
+   // Create a GL context
+   //context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs ); //OK for GLES
+   context = eglCreateContext(display, config, EGL_NO_CONTEXT, NULL ); //necessary for OpenVG
+   if ( context == EGL_NO_CONTEXT )
+   {
+       printf("failed to make context\n");
+      return EGL_FALSE;
+   }   
+   
+   // Make the context current
+   if ( !eglMakeCurrent(display, surface, surface, context) )
+   {
+       printf("failed to make current");
+      return EGL_FALSE;
+   }
+   
+   *eglDisplay = display;
+   *eglSurface = surface;
+   *eglContext = context;
+   return EGL_TRUE;
+} 
+
+
 #ifdef RPI_NO_X
 ///
 //  WinCreate() - RaspberryPi, direct surface (No X, Xlib)
@@ -196,6 +296,59 @@ EGLBoolean WinCreate(ESContext *esContext, const char *title)
 
 	return EGL_TRUE;
 }
+
+
+EGLBoolean WinCreate2(EGL_DISPMANX_WINDOW_T *nativewindow_p) 
+{
+   int32_t success = 0;
+
+   DISPMANX_ELEMENT_HANDLE_T dispman_element;
+   DISPMANX_DISPLAY_HANDLE_T dispman_display;
+   DISPMANX_UPDATE_HANDLE_T dispman_update;
+   VC_RECT_T dst_rect;
+   VC_RECT_T src_rect;
+   
+
+   int display_width;
+   int display_height;
+
+   // create an EGL window surface, passing context width/height
+   success = graphics_get_display_size(0 /* LCD */, &display_width, &display_height);
+   if ( success < 0 )
+   {
+      return EGL_FALSE;
+   }
+   
+   // You can hardcode the resolution here:
+   display_width = 640;
+   display_height = 480;
+
+   dst_rect.x = 0;
+   dst_rect.y = 0;
+   dst_rect.width = display_width;
+   dst_rect.height = display_height;
+      
+   src_rect.x = 0;
+   src_rect.y = 0;
+   src_rect.width = display_width << 16;
+   src_rect.height = display_height << 16;   
+
+   dispman_display = vc_dispmanx_display_open( 0 /* LCD */);
+   dispman_update = vc_dispmanx_update_start( 0 );
+         
+   dispman_element = vc_dispmanx_element_add ( dispman_update, dispman_display,
+      0/*layer*/, &dst_rect, 0/*src*/,
+      &src_rect, DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0/*clamp*/, 0/*transform*/);
+      
+   (*nativewindow_p).element = dispman_element;
+   (*nativewindow_p).width = display_width;
+   (*nativewindow_p).height = display_height;
+   vc_dispmanx_update_submit_sync( dispman_update );
+	return EGL_TRUE;
+}
+///
+
+
 ///
 //  userInterrupt()
 //
@@ -244,6 +397,28 @@ void ESUTIL_API esInitContext ( ESContext *esContext )
 }
 
 
+GLboolean ESUTIL_API esCreateWindow2 ( ESContext *esContext )
+{
+    static EGL_DISPMANX_WINDOW_T nativewindow;
+    
+    if ( !WinCreate2 ( &nativewindow) )
+   {
+      return GL_FALSE;
+   }
+   
+   esContext->hWnd = &nativewindow;
+   
+   if ( !CreateEGLContext2 ( esContext->hWnd,
+                            &esContext->eglDisplay,
+                            &esContext->eglContext,
+                            &esContext->eglSurface) )
+   {
+      return GL_FALSE;
+   }
+   
+   return GL_TRUE;
+}
+
 ///
 //  esCreateWindow()
 //
@@ -258,29 +433,26 @@ void ESUTIL_API esInitContext ( ESContext *esContext )
 //
 GLboolean ESUTIL_API esCreateWindow ( ESContext *esContext, const char* title, GLint width, GLint height, GLuint flags, EGLenum api )
 {
-   EGLint attribList[] =
-   {
-       EGL_RED_SIZE,       5,
-       EGL_GREEN_SIZE,     6,
-       EGL_BLUE_SIZE,      5,
-       EGL_ALPHA_SIZE,     (flags & ES_WINDOW_ALPHA) ? 8 : EGL_DONT_CARE,
-       EGL_DEPTH_SIZE,     (flags & ES_WINDOW_DEPTH) ? 8 : EGL_DONT_CARE,
-       EGL_STENCIL_SIZE,   (flags & ES_WINDOW_STENCIL) ? 8 : EGL_DONT_CARE,
-       EGL_SAMPLE_BUFFERS, (flags & ES_WINDOW_MULTISAMPLE) ? 1 : 0,
-       EGL_NONE
-   };
-   
    //~ EGLint attribList[] =
    //~ {
        //~ EGL_RED_SIZE,       5,
        //~ EGL_GREEN_SIZE,     6,
        //~ EGL_BLUE_SIZE,      5,
        //~ EGL_ALPHA_SIZE,     (flags & ES_WINDOW_ALPHA) ? 8 : EGL_DONT_CARE,
-       //~ EGL_LUMINANCE_SIZE, EGL_DONT_CARE,
-       //~ EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-       //~ EGL_SAMPLES, 1,
+       //~ EGL_DEPTH_SIZE,     (flags & ES_WINDOW_DEPTH) ? 8 : EGL_DONT_CARE,
+       //~ EGL_STENCIL_SIZE,   (flags & ES_WINDOW_STENCIL) ? 8 : EGL_DONT_CARE,
+       //~ EGL_SAMPLE_BUFFERS, (flags & ES_WINDOW_MULTISAMPLE) ? 1 : 0,
        //~ EGL_NONE
    //~ };
+   
+   EGLint attribList[] =
+   {
+       EGL_RED_SIZE,       5,
+       EGL_GREEN_SIZE,     6,
+       EGL_BLUE_SIZE,      5,
+       EGL_ALPHA_SIZE,     EGL_DONT_CARE,
+       EGL_NONE
+   };
    
    if ( esContext == NULL )
    {

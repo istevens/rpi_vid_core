@@ -1,6 +1,7 @@
 
 from libc.stdlib cimport malloc, free
 
+
 cdef extern from "./esUtil.h":
     ctypedef unsigned char    GLboolean
     ctypedef unsigned int     EGLenum
@@ -28,6 +29,7 @@ cdef extern from "./esUtil.h":
     void esInitContext ( ESContext *esContext )
     GLboolean esCreateWindow ( ESContext *esContext, char *title, 
             GLint width, GLint height, GLuint flags, EGLenum api )
+    GLboolean esCreateWindow2 ( ESContext *esContext )
     void esRegisterDrawFunc ( ESContext *esContext, drawFunc user_func )
     void esMainLoop ( ESContext *esContext )
     
@@ -71,6 +73,11 @@ def htDraw(Context pyctx):
 def CreateWindow(Context ctx, char *title, GLint width, GLint height, 
                                         GLuint flags, EGLenum api):
     if esCreateWindow(ctx._c_esctx, title, width, height, flags, api) != 1:
+        raise RuntimeError("Failed to create window")
+        
+def CreateWindow2(Context ctx, char *title, GLint width, GLint height, 
+                                        GLuint flags, EGLenum api):
+    if esCreateWindow2(ctx._c_esctx) != 1:
         raise RuntimeError("Failed to create window")
     
 def RegisterDrawFunc(Context ctx, object func):
