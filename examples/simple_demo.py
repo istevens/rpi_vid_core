@@ -1,9 +1,10 @@
+import sys, time
+sys.path.append("..")
 
 import pyximport
 pyximport.install()
 
-import time, sys
-import vg, egl, bcm
+from vidcore import vg, egl, bcm
 
 _c = egl._constants
 
