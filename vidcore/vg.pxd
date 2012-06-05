@@ -369,6 +369,201 @@ cdef extern from "/opt/vc/include/VG/openvg.h":
 
     
     ###function prototypes ###
+    
+    _VGErrorCode vgGetError()
+    void vgFlush()
+    void vgFinish()
+    ###/* Getters and Setters */
+    void vgSetf (_VGParamType type, _VGfloat value)
+    void vgSeti (_VGParamType type, _VGint value)
+    void vgSetfv(_VGParamType type, _VGint count,
+                         _VGfloat * values)
+    void vgSetiv(_VGParamType type, _VGint count,
+                         _VGint * values)
+
+    _VGfloat vgGetf(_VGParamType type)
+    _VGint vgGeti(_VGParamType type)
+    _VGint vgGetVectorSize(_VGParamType type)
+    void vgGetfv(_VGParamType type, _VGint count, _VGfloat * values)
+    void vgGetiv(_VGParamType type, _VGint count, _VGint * values)
+
+    void vgSetParameterf(_VGHandle object,
+                                 _VGint paramType,
+                                 _VGfloat value)
+    void vgSetParameteri(_VGHandle object,
+                                 _VGint paramType,
+                                 _VGint value)
+    void vgSetParameterfv(_VGHandle object,
+                                  _VGint paramType,
+                                  _VGint count, _VGfloat * values)
+    void vgSetParameteriv(_VGHandle object,
+                                  _VGint paramType,
+                                  _VGint count, _VGint * values)
+
+    _VGfloat vgGetParameterf(_VGHandle object,
+                                    _VGint paramType)
+    _VGint vgGetParameteri(_VGHandle object,
+                                  _VGint paramType)
+    _VGint vgGetParameterVectorSize(_VGHandle object,
+                                           _VGint paramType)
+    void vgGetParameterfv(_VGHandle object,
+                                  _VGint paramType,
+                                  _VGint count, _VGfloat * values)
+    void vgGetParameteriv(_VGHandle object,
+                                  _VGint paramType,
+                                  _VGint count, _VGint * values)
+
+    ###/* Matrix Manipulation */
+    void vgLoadIdentity()
+    void vgLoadMatrix(_VGfloat * m)
+    void vgGetMatrix(_VGfloat * m)
+    void vgMultMatrix(_VGfloat * m)
+    void vgTranslate(_VGfloat tx, _VGfloat ty)
+    void vgScale(_VGfloat sx, _VGfloat sy)
+    void vgShear(_VGfloat shx, _VGfloat shy)
+    void vgRotate(_VGfloat angle)
+
+    ###/* Masking and Clearing */
+    void vgMask(_VGHandle mask, _VGMaskOperation operation,
+                                     _VGint x, _VGint y,
+                                     _VGint width, _VGint height)
+    void vgRenderToMask(_VGPath path,
+                                            _VGbitfield paintModes,
+                                            _VGMaskOperation operation)
+    _VGMaskLayer vgCreateMaskLayer(_VGint width, _VGint height)
+    void vgDestroyMaskLayer(_VGMaskLayer maskLayer)
+    void vgFillMaskLayer(_VGMaskLayer maskLayer,
+                                             _VGint x, _VGint y,
+                                             _VGint width, _VGint height,
+                                             _VGfloat value)
+    void vgCopyMask(_VGMaskLayer maskLayer,
+                                        _VGint dx, _VGint dy,
+                                        _VGint sx, _VGint sy,
+                                        _VGint width, _VGint height)
+    void vgClear(_VGint x, _VGint y, _VGint width, _VGint height)
+
+    ###/* Paint */
+    _VGPaint vgCreatePaint()
+    void vgDestroyPaint(_VGPaint paint)
+    void vgSetPaint(_VGPaint paint, _VGbitfield paintModes)
+    _VGPaint vgGetPaint(_VGPaintMode paintMode)
+    void vgSetColor(_VGPaint paint, _VGuint rgba)
+    _VGuint vgGetColor(_VGPaint paint)
+    void vgPaintPattern(_VGPaint paint, _VGImage pattern)
+
+    ###/* Images */
+    _VGImage vgCreateImage(_VGImageFormat format,
+                                  _VGint width, _VGint height,
+                                  _VGbitfield allowedQuality)
+    void vgDestroyImage(_VGImage image)
+    void vgClearImage(_VGImage image,
+                              _VGint x, _VGint y, _VGint width, _VGint height)
+    void vgImageSubData(_VGImage image,   ###does this function set the data?###
+                                void * data, _VGint dataStride,
+                                _VGImageFormat dataFormat,
+                                _VGint x, _VGint y, _VGint width, _VGint height)
+    void vgGetImageSubData(_VGImage image,
+                                   void * data, _VGint dataStride,
+                                   _VGImageFormat dataFormat,
+                                   _VGint x, _VGint y,
+                                   _VGint width, _VGint height)
+    _VGImage vgChildImage(_VGImage parent,
+                                 _VGint x, _VGint y, _VGint width, _VGint height)
+    _VGImage vgGetParent(_VGImage image) 
+    void vgCopyImage(_VGImage dst, _VGint dx, _VGint dy,
+                             _VGImage src, _VGint sx, _VGint sy,
+                             _VGint width, _VGint height,
+                             _VGboolean dither)
+    void vgDrawImage(_VGImage image)
+    void vgSetPixels(_VGint dx, _VGint dy,
+                             _VGImage src, _VGint sx, _VGint sy,
+                             _VGint width, _VGint height)
+    void vgWritePixels(void * data, _VGint dataStride,
+                               _VGImageFormat dataFormat,
+                               _VGint dx, _VGint dy,
+                               _VGint width, _VGint height)
+    void vgGetPixels(_VGImage dst, _VGint dx, _VGint dy,
+                             _VGint sx, _VGint sy,
+                             _VGint width, _VGint height)
+    void vgReadPixels(void * data, _VGint dataStride,
+                              _VGImageFormat dataFormat,
+                              _VGint sx, _VGint sy,
+                              _VGint width, _VGint height)
+    void vgCopyPixels(_VGint dx, _VGint dy,
+                              _VGint sx, _VGint sy,
+                              _VGint width, _VGint height)
+
+    ###/* Text */
+    _VGFont vgCreateFont(_VGint glyphCapacityHint)
+    void vgDestroyFont(_VGFont font)
+    void vgSetGlyphToPath(_VGFont font,
+                                              _VGuint glyphIndex,
+                                              _VGPath path,
+                                              _VGboolean isHinted,
+                                              _VGfloat glyphOrigin [2],
+                                              _VGfloat escapement[2])
+    void vgSetGlyphToImage(_VGFont font,
+                                               _VGuint glyphIndex,
+                                               _VGImage image,
+                                               _VGfloat glyphOrigin [2],
+                                               _VGfloat escapement[2])
+    void vgClearGlyph(_VGFont font,_VGuint glyphIndex)
+    void vgDrawGlyph(_VGFont font, 
+                                         _VGuint glyphIndex,
+                                         _VGbitfield paintModes,
+                                         _VGboolean allowAutoHinting)
+    void vgDrawGlyphs(_VGFont font,
+                                          _VGint glyphCount,
+                                          _VGuint *glyphIndices,
+                                          _VGfloat *adjustments_x,
+                                          _VGfloat *adjustments_y,
+                                          _VGbitfield paintModes,
+                                          _VGboolean allowAutoHinting)
+
+    ###/* Image Filters */
+    void vgColorMatrix(_VGImage dst, _VGImage src,
+                               _VGfloat * matrix)
+    void vgConvolve(_VGImage dst, _VGImage src,
+                            _VGint kernelWidth, _VGint kernelHeight,
+                            _VGint shiftX, _VGint shiftY,
+                            _VGshort * kernel,
+                            _VGfloat scale,
+                            _VGfloat bias,
+                            _VGTilingMode tilingMode)
+    void vgSeparableConvolve(_VGImage dst, _VGImage src,
+                                     _VGint kernelWidth,
+                                     _VGint kernelHeight,
+                                     _VGint shiftX, _VGint shiftY,
+                                     _VGshort * kernelX,
+                                     _VGshort * kernelY,
+                                     _VGfloat scale,
+                                     _VGfloat bias,
+                                     _VGTilingMode tilingMode)
+    void vgGaussianBlur(_VGImage dst, _VGImage src,
+                                _VGfloat stdDeviationX,
+                                _VGfloat stdDeviationY,
+                                _VGTilingMode tilingMode)
+    void vgLookup(_VGImage dst, _VGImage src,
+                          _VGubyte * redLUT,
+                          _VGubyte * greenLUT,
+                          _VGubyte * blueLUT,
+                          _VGubyte * alphaLUT,
+                          _VGboolean outputLinear,
+                          _VGboolean outputPremultiplied)
+    void vgLookupSingle(_VGImage dst, _VGImage src,
+                                _VGuint * lookupTable,
+                                _VGImageChannel sourceChannel,
+                                _VGboolean outputLinear,
+                                _VGboolean outputPremultiplied)
+
+    ###/* Hardware Queries */
+    _VGHardwareQueryResult vgHardwareQuery(_VGHardwareQueryType key,
+                                                  _VGint setting)
+
+    ###/* Renderer and Extension Information */
+    _VGubyte * vgGetString(_VGStringID name)
+
+    ### /*Path creation and manipulation */
     _VGPath vgCreatePath(_VGint pathFormat,
                                 _VGPathDatatype datatype,
                                 _VGfloat scale, _VGfloat bias,
@@ -408,18 +603,25 @@ cdef extern from "/opt/vc/include/VG/openvg.h":
                                          _VGfloat * width, _VGfloat * height)
     void vgDrawPath(_VGPath path, _VGbitfield paintModes)
     
-    void vgClear(_VGint x, _VGint y, _VGint width, _VGint height)
     
-    void vgSetf (_VGParamType type, _VGfloat value)
-    void vgSeti (_VGParamType type, _VGint value)
-    void vgSetfv(_VGParamType type, _VGint count,
-                         _VGfloat * values)
-    void vgSetiv(_VGParamType type, _VGint count,
-                         _VGint * values)
-    
+###Extension classes ###
 
 cdef class Path:
     cdef:
         _VGPath _vg_path #handle to the path structure
     
-    
+cdef class Font:
+    cdef:
+        _VGFont _vg_font 
+
+cdef class Paint:
+    cdef:
+        _VGPaint _vg_paint
+        
+cdef class Image:
+    cdef:
+        _VGImage _vg_image
+        
+cdef class MaskLayer:
+    cdef:
+        _VGMaskLayer _vg_masklayer

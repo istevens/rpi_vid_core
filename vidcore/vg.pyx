@@ -401,3 +401,15 @@ cdef class Path:
         vgAppendPathData(self._vg_path, N, _cmds, <void*>_coords)
         free(_cmds)
         free(_coords)
+
+cdef class Font:
+    pass
+
+cdef class Paint:
+    pass
+        
+cdef class Image:
+    pass
+        
+cdef class MaskLayer:
+    pass
