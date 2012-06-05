@@ -1,9 +1,9 @@
-#es.pyxbld
+#egl.pyxbld
 
 def make_ext(modname, pyxfilename):
     from distutils.extension import Extension
-    ext = Extension(name='es',
-                    sources=['es.pyx','esUtil.c','Hello_Triangle.c'],
+    ext = Extension(name='vidcore.egl',
+                    sources=['vidcore/egl.pyx'],
                     extra_compile_args=['-DRPI_NO_X'],
                     libraries=['GLESv2','EGL','m','bcm_host'],
                     library_dirs=['/opt/vc/lib'],

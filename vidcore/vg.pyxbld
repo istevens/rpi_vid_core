@@ -2,8 +2,8 @@
 
 def make_ext(modname, pyxfilename):
     from distutils.extension import Extension
-    ext = Extension(name='vg',
-                    sources=['vg.pyx'],
+    ext = Extension(name='vidcore.vg',
+                    sources=['vidcore/vg.pyx'],
                     extra_compile_args=['-DRPI_NO_X'],
                     libraries=['m','OpenVG'],
                     library_dirs=['/opt/vc/lib'],
