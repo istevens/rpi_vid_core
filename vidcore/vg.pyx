@@ -346,16 +346,163 @@ class VGStringID(object):
     VG_EXTENSIONS                               = 0x2303
     VG_STRING_ID_FORCE_SIZE                     = VG_MAX_ENUM
 
+vg_error_codes={
+    0: 'VG_NO_ERROR',
+    0x1000: 'VG_BAD_HANDLE_ERROR',
+    0x1001: 'VG_ILLEGAL_ARGUMENT_ERROR',
+    0x1002: 'VG_OUT_OF_MEMORY_ERROR',
+    0x1003: 'VG_PATH_CAPABILITY_ERROR',
+    0x1004: 'VG_UNSUPPORTED_IMAGE_FORMAT_ERROR',
+    0x1005: 'VG_UNSUPPORTED_PATH_FORMAT_ERROR',
+    0x1006: 'VG_IMAGE_IN_USE_ERROR',
+    0x1007: 'VG_NO_CONTEXT_ERROR'
+    }
+
+def get_error():
+    return <unsigned int>vgGetError()
+    
+def flush():
+    vgFlush()
+    
+def finish():
+    vgFinish()
+    
+    
+def SetParam(int paramType, value):
+    if isinstance(value, float):
+        vgSetf(<_VGParamType>paramType, value)
+    elif isinstance(value, int):
+        vgSeti(<_VGParamType>paramType, value)
+    else:
+        raise TypeError("value must be float or int. Got %r instead"%value)
+    
+#~ ###/* Getters and Setters */
+    #~ void vgSetfv(_VGParamType type, _VGint count,
+                         #~ _VGfloat * values)
+    #~ void vgSetiv(_VGParamType type, _VGint count,
+                         #~ _VGint * values)
+#~ 
+    #~ _VGfloat vgGetf(_VGParamType type)
+    #~ _VGint vgGeti(_VGParamType type)
+    #~ _VGint vgGetVectorSize(_VGParamType type)
+    #~ void vgGetfv(_VGParamType type, _VGint count, _VGfloat * values)
+    #~ void vgGetiv(_VGParamType type, _VGint count, _VGint * values)
+
+
+    ###/* Matrix Manipulation */
+def load_identity():
+    vgLoadIdentity()
+    
+def load_matrix(list m):
+    cdef:
+        int i
+        _VGfloat mc[9]
+        
+    if len(m) != 9:
+        raise ValueError("Matrix should be a sequency of 9 numbers")
+    for i in xrange(9):
+        mc[i] = m[i]
+    vgLoadMatrix(mc)
+    
+def get_matrix():
+    cdef:
+        _VGfloat *m
+        int i
+    vgGetMatrix(m)
+    out = []
+    for i in xrange(9):
+        out.append(m[i])
+    return out
+    
+def mult_matrix(list m):
+    cdef:
+        int i
+        _VGfloat mc[9]
+    if len(m) != 9:
+        raise ValueError("Matrix should be a sequency of 9 numbers")
+    for i in xrange(9):
+        mc[i] = m[i]
+    vgMultMatrix(mc)
+    
+def translate(_VGfloat tx, _VGfloat ty):
+    vgTranslate(tx, ty)
+    
+def scale(_VGfloat sx, _VGfloat sy):
+    vgScale(sx, sy)
+    
+def shear(_VGfloat shx, _VGfloat shy):
+    vgShear(shx, shy)
+    
+def rotate(_VGfloat angle):
+    vgRotate(angle)
+
+    #~ ###/* Masking and Clearing */
+    #~ void vgMask(_VGHandle mask, _VGMaskOperation operation,
+                                     #~ _VGint x, _VGint y,
+                                     #~ _VGint width, _VGint height)
+    #~ void vgRenderToMask(_VGPath path,
+                                            #~ _VGbitfield paintModes,
+                                            #~ _VGMaskOperation operation)
+
+    #~ void vgClear(_VGint x, _VGint y, _VGint width, _VGint height)
+#~ 
+
+#~ 
+
+#~ 
+ 
+#~ 
+    #~ ###/* Image Filters */
+    #~ void vgColorMatrix(_VGImage dst, _VGImage src,
+                               #~ _VGfloat * matrix)
+    #~ void vgConvolve(_VGImage dst, _VGImage src,
+                            #~ _VGint kernelWidth, _VGint kernelHeight,
+                            #~ _VGint shiftX, _VGint shiftY,
+                            #~ _VGshort * kernel,
+                            #~ _VGfloat scale,
+                            #~ _VGfloat bias,
+                            #~ _VGTilingMode tilingMode)
+    #~ void vgSeparableConvolve(_VGImage dst, _VGImage src,
+                                     #~ _VGint kernelWidth,
+                                     #~ _VGint kernelHeight,
+                                     #~ _VGint shiftX, _VGint shiftY,
+                                     #~ _VGshort * kernelX,
+                                     #~ _VGshort * kernelY,
+                                     #~ _VGfloat scale,
+                                     #~ _VGfloat bias,
+                                     #~ _VGTilingMode tilingMode)
+    #~ void vgGaussianBlur(_VGImage dst, _VGImage src,
+                                #~ _VGfloat stdDeviationX,
+                                #~ _VGfloat stdDeviationY,
+                                #~ _VGTilingMode tilingMode)
+    #~ void vgLookup(_VGImage dst, _VGImage src,
+                          #~ _VGubyte * redLUT,
+                          #~ _VGubyte * greenLUT,
+                          #~ _VGubyte * blueLUT,
+                          #~ _VGubyte * alphaLUT,
+                          #~ _VGboolean outputLinear,
+                          #~ _VGboolean outputPremultiplied)
+    #~ void vgLookupSingle(_VGImage dst, _VGImage src,
+                                #~ _VGuint * lookupTable,
+                                #~ _VGImageChannel sourceChannel,
+                                #~ _VGboolean outputLinear,
+                                #~ _VGboolean outputPremultiplied)
+#~ 
+    #~ ###/* Hardware Queries */
+    #~ _VGHardwareQueryResult vgHardwareQuery(_VGHardwareQueryType key,
+                                                  #~ _VGint setting)
+#~ 
+    #~ ###/* Renderer and Extension Information */
+    #~ _VGubyte * vgGetString(_VGStringID name)
+#~ 
+
+    
+    
+    
+    
+    
     
 
-
-#def SetParam(int paramType, value):
-#    if isinstance(value, float):
-#        vgSetf(<_VGParamType>paramType, value)
-#    elif isinstance(value, int):
-#        vgSeti(<_VGParamType>paramType, value)
-#    else:
-#        raise TypeError("value must be float or int. Got %r instead"%value)
 
 def SetClearColour(_VGfloat r, _VGfloat g, _VGfloat b, _VGfloat a):
     cdef _VGfloat c[4]
@@ -369,9 +516,95 @@ def Clear(_VGint x, _VGint y, _VGint width, _VGint height):
     vgClear(x, y, width, height)
 
 
+cdef class Handle:
+    def set_param_f(self, _VGint paramType, _VGfloat value):
+        vgSetParameterf(<_VGHandle>self._vg_handle, paramType, value)
+    
+    def set_param_i(self, _VGint paramType, _VGint value):
+        vgSetParameteri(<_VGHandle>self._vg_handle, paramType, value)
+        
+    def set_param_fv(self, _VGint paramType, list val_list):
+        cdef:
+            _VGint i, count=len(val_list)
+            _VGfloat *values
+            
+        values = <_VGfloat*>malloc(sizeof(_VGfloat)*count)
+        try:
+            if values is not NULL:
+                for i in xrange(count):
+                    values[i] = float(val_list[i])
+            else:
+                raise MemoryError("Could not allocate buffer for list data")
+            vgSetParameterfv(<_VGHandle>self._vg_handle, paramType,
+                                      count, values)
+        finally:
+            free(values)
+            
+    def set_param_iv(self, _VGint paramType, list val_list):
+        cdef:
+            _VGint i, count=len(val_list)
+            _VGint *values
+            
+        values = <_VGint*>malloc(sizeof(_VGint)*count)
+        try:
+            if values is not NULL:
+                for i in xrange(count):
+                    values[i] = int(val_list[i])
+            else:
+                raise MemoryError("Could not allocate buffer for list data")
+            vgSetParameteriv(<_VGHandle>self._vg_handle, paramType,
+                                      count, values)
+        finally:
+            free(values)
+    
+    def get_param_f(self, _VGint paramType):
+        return vgGetParameterf(<_VGHandle>self._vg_handle, paramType)
+        
+    def get_param_i(self, _VGint paramType):
+        return vgGetParameteri(<_VGHandle>self._vg_handle, paramType)
+        
+    def get_param_f_list(self, _VGint paramType):
+        cdef:
+            _VGint size, i
+            _VGfloat *values
+        size = vgGetParameterVectorSize(<_VGHandle>self._vg_handle, paramType)
+        values = <_VGfloat*>malloc(sizeof(_VGfloat)*size)
+        try:
+            if values is not NULL:
+                vgGetParameterfv(<_VGHandle>self._vg_handle, paramType,
+                                        size, values)
+                out = []
+                for i in xrange(size):
+                    out.append(values[i])
+            else:
+                raise MemoryError("Failed to allocate buffer for return values")
+        finally:
+            free(values)
+        return out
+        
+    def get_param_i_list(self, _VGint paramType):
+        cdef:
+            _VGint size, i
+            _VGint *values
+        size = vgGetParameterVectorSize(<_VGHandle>self._vg_handle, paramType)
+        values = <_VGint*>malloc(sizeof(_VGint)*size)
+        try:
+            if values is not NULL:
+                vgGetParameteriv(<_VGHandle>self._vg_handle, paramType,
+                                        size, values)
+                out = []
+                for i in xrange(size):
+                    out.append(values[i])
+            else:
+                raise MemoryError("Failed to allocate buffer for return values")
+        finally:
+            free(values)
+        return out
+
+
 cdef class Path:
     def __cinit__(self):
-        self._vg_path = vgCreatePath(VG_PATH_FORMAT_STANDARD,
+        self._vg_handle = vgCreatePath(VG_PATH_FORMAT_STANDARD,
                                     VG_PATH_DATATYPE_F,
                                     1.0, 0.0,
                                     4,
@@ -379,10 +612,10 @@ cdef class Path:
                                     VG_PATH_CAPABILITY_ALL)
                                     
     def __dealloc__(self):
-        vgDestroyPath(self._vg_path)
+        vgDestroyPath(self._vg_handle)
         
     def DrawPath(self):
-        vgDrawPath(self._vg_path, VG_STROKE_PATH)
+        vgDrawPath(self._vg_handle, VG_STROKE_PATH)
         
     def AppendPathData(self, list cmds, list coords):
         cdef:
@@ -398,18 +631,150 @@ cdef class Path:
             _cmds[i] = cmds[i]
             _coords[2*i] = coords[i][0]
             _coords[2*i+1] = coords[i][1]
-        vgAppendPathData(self._vg_path, N, _cmds, <void*>_coords)
+        vgAppendPathData(self._vg_handle, N, _cmds, <void*>_coords)
         free(_cmds)
         free(_coords)
+        
+    #~ ### /*Path creation and manipulation */
+    #~ _VGPath vgCreatePath(_VGint pathFormat,
+                                #~ _VGPathDatatype datatype,
+                                #~ _VGfloat scale, _VGfloat bias,
+                                #~ _VGint segmentCapacityHint,
+                                #~ _VGint coordCapacityHint,
+                                #~ _VGbitfield capabilities)
+    #~ void vgClearPath(_VGPath path, _VGbitfield capabilities)
+    #~ void vgDestroyPath(_VGPath path)
+    #~ void vgRemovePathCapabilities(_VGPath path,
+                                  #~ _VGbitfield capabilities)
+    #~ _VGbitfield vgGetPathCapabilities(_VGPath path)
+    #~ void vgAppendPath(_VGPath dstPath, _VGPath srcPath)
+    #~ void vgAppendPathData(_VGPath dstPath,
+                                  #~ _VGint numSegments,
+                                  #~ _VGubyte * pathSegments,
+                                  #~ void * pathData)
+    #~ void vgModifyPathCoords(_VGPath dstPath, _VGint startIndex,
+                                    #~ _VGint numSegments,
+                                    #~ void * pathData)
+    #~ void vgTransformPath(_VGPath dstPath, _VGPath srcPath)
+    #~ _VGboolean vgInterpolatePath(_VGPath dstPath,
+                                        #~ _VGPath startPath,
+                                        #~ _VGPath endPath,
+                                        #~ _VGfloat amount)
+    #~ _VGfloat vgPathLength(_VGPath path,
+                                 #~ _VGint startSegment, _VGint numSegments)
+    #~ void vgPointAlongPath(_VGPath path,
+                                  #~ _VGint startSegment, _VGint numSegments,
+                                  #~ _VGfloat distance,
+                                  #~ _VGfloat * x, _VGfloat * y,
+                                  #~ _VGfloat * tangentX, _VGfloat * tangentY)
+    #~ void vgPathBounds(_VGPath path,
+                              #~ _VGfloat * minX, _VGfloat * minY,
+                              #~ _VGfloat * width, _VGfloat * height)
+    #~ void vgPathTransformedBounds(_VGPath path,
+                                         #~ _VGfloat * minX, _VGfloat * minY,
+                                         #~ _VGfloat * width, _VGfloat * height)
+    #~ void vgDrawPath(_VGPath path, _VGbitfield paintModes)
+    #~ 
+        
 
 cdef class Font:
     pass
+    
+   #~ ###/* Text */
+    #~ _VGFont vgCreateFont(_VGint glyphCapacityHint)
+    #~ void vgDestroyFont(_VGFont font)
+    #~ void vgSetGlyphToPath(_VGFont font,
+                                              #~ _VGuint glyphIndex,
+                                              #~ _VGPath path,
+                                              #~ _VGboolean isHinted,
+                                              #~ _VGfloat glyphOrigin [2],
+                                              #~ _VGfloat escapement[2])
+    #~ void vgSetGlyphToImage(_VGFont font,
+                                               #~ _VGuint glyphIndex,
+                                               #~ _VGImage image,
+                                               #~ _VGfloat glyphOrigin [2],
+                                               #~ _VGfloat escapement[2])
+    #~ void vgClearGlyph(_VGFont font,_VGuint glyphIndex)
+    #~ void vgDrawGlyph(_VGFont font, 
+                                         #~ _VGuint glyphIndex,
+                                         #~ _VGbitfield paintModes,
+                                         #~ _VGboolean allowAutoHinting)
+    #~ void vgDrawGlyphs(_VGFont font,
+                                          #~ _VGint glyphCount,
+                                          #~ _VGuint *glyphIndices,
+                                          #~ _VGfloat *adjustments_x,
+                                          #~ _VGfloat *adjustments_y,
+                                          #~ _VGbitfield paintModes,
+                                          #~ _VGboolean allowAutoHinting)
+    
 
 cdef class Paint:
     pass
+    
+    #~ ###/* Paint */
+    #~ _VGPaint vgCreatePaint()
+    #~ void vgDestroyPaint(_VGPaint paint)
+    #~ void vgSetPaint(_VGPaint paint, _VGbitfield paintModes)
+    #~ _VGPaint vgGetPaint(_VGPaintMode paintMode)
+    #~ void vgSetColor(_VGPaint paint, _VGuint rgba)
+    #~ _VGuint vgGetColor(_VGPaint paint)
+    #~ void vgPaintPattern(_VGPaint paint, _VGImage pattern)
         
 cdef class Image:
     pass
+    
+    #~ ###/* Images */
+    #~ _VGImage vgCreateImage(_VGImageFormat format,
+                                  #~ _VGint width, _VGint height,
+                                  #~ _VGbitfield allowedQuality)
+    #~ void vgDestroyImage(_VGImage image)
+    #~ void vgClearImage(_VGImage image,
+                              #~ _VGint x, _VGint y, _VGint width, _VGint height)
+    #~ void vgImageSubData(_VGImage image,   ###does this function set the data?###
+                                #~ void * data, _VGint dataStride,
+                                #~ _VGImageFormat dataFormat,
+                                #~ _VGint x, _VGint y, _VGint width, _VGint height)
+    #~ void vgGetImageSubData(_VGImage image,
+                                   #~ void * data, _VGint dataStride,
+                                   #~ _VGImageFormat dataFormat,
+                                   #~ _VGint x, _VGint y,
+                                   #~ _VGint width, _VGint height)
+    #~ _VGImage vgChildImage(_VGImage parent,
+                                 #~ _VGint x, _VGint y, _VGint width, _VGint height)
+    #~ _VGImage vgGetParent(_VGImage image) 
+    #~ void vgCopyImage(_VGImage dst, _VGint dx, _VGint dy,
+                             #~ _VGImage src, _VGint sx, _VGint sy,
+                             #~ _VGint width, _VGint height,
+                             #~ _VGboolean dither)
+    #~ void vgDrawImage(_VGImage image)
+    #~ void vgSetPixels(_VGint dx, _VGint dy,
+                             #~ _VGImage src, _VGint sx, _VGint sy,
+                             #~ _VGint width, _VGint height)
+    #~ void vgWritePixels(void * data, _VGint dataStride,
+                               #~ _VGImageFormat dataFormat,
+                               #~ _VGint dx, _VGint dy,
+                               #~ _VGint width, _VGint height)
+    #~ void vgGetPixels(_VGImage dst, _VGint dx, _VGint dy,
+                             #~ _VGint sx, _VGint sy,
+                             #~ _VGint width, _VGint height)
+    #~ void vgReadPixels(void * data, _VGint dataStride,
+                              #~ _VGImageFormat dataFormat,
+                              #~ _VGint sx, _VGint sy,
+                              #~ _VGint width, _VGint height)
+    #~ void vgCopyPixels(_VGint dx, _VGint dy,
+                              #~ _VGint sx, _VGint sy,
+                              #~ _VGint width, _VGint height)
         
 cdef class MaskLayer:
     pass
+
+    #~ _VGMaskLayer vgCreateMaskLayer(_VGint width, _VGint height)
+    #~ void vgDestroyMaskLayer(_VGMaskLayer maskLayer)
+    #~ void vgFillMaskLayer(_VGMaskLayer maskLayer,
+                                             #~ _VGint x, _VGint y,
+                                             #~ _VGint width, _VGint height,
+                                             #~ _VGfloat value)
+    #~ void vgCopyMask(_VGMaskLayer maskLayer,
+                                        #~ _VGint dx, _VGint dy,
+                                        #~ _VGint sx, _VGint sy,
+                                        #~ _VGint width, _VGint height)
