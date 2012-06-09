@@ -707,9 +707,6 @@ cdef class Font:
                                           #~ _VGbitfield paintModes,
                                           #~ _VGboolean allowAutoHinting)
     
-
-cdef class Paint:
-    pass
     
     #~ ###/* Paint */
     #~ _VGPaint vgCreatePaint()
@@ -719,6 +716,41 @@ cdef class Paint:
     #~ void vgSetColor(_VGPaint paint, _VGuint rgba)
     #~ _VGuint vgGetColor(_VGPaint paint)
     #~ void vgPaintPattern(_VGPaint paint, _VGImage pattern)
+    
+_paint_reg = {}
+
+cdef class Paint:
+    def __cinit__(self):
+        self._vg_handle = vgCreatePaint()
+        _paint_reg[<int>self._vg_handle] = self
+    
+    def __dealloc__(self):
+        vgDestroyPaint(self._vg_handle)
+        del _paint_reg[<int>self._vg_handle]
+        
+    def set_color(self, _VGuint rgba):
+        vgSetColor(self._vg_handle, rgba)
+    
+    def get_color(self):
+        cdef:
+            _VGuint rgba
+        rgba = vgGetColor(self._vg_handle)
+        
+    def paint_pattern(Image image):
+        vgPaintPattern(self._vg_handle, image._vg_handle)
+        
+    
+def set_paint(Paint paint, _VGbitfield paintModes):
+    vgSetPaint(paint._vg_handle, paintModes)
+    
+def get_paint(_VGPaintMode paintMode):
+    cdef:
+        _VGPaint c_paint
+    c_paint = vgGetPaint(paintMode)
+    try:
+        return _paint_reg[<int>c_paint]
+    except KeyError:
+        return None
         
 cdef class Image:
     pass
