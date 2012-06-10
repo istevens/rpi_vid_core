@@ -358,6 +358,22 @@ vg_error_codes={
     0x1007: 'VG_NO_CONTEXT_ERROR'
     }
 
+class OpenVGError(Exception):
+    pass
+
+
+cdef check_error():
+    cdef unsigned int e
+    e = vgGetError()
+    if e == VG_NO_ERROR:
+        return
+    error_list = []
+    while e != VG_NO_ERROR:
+        error_list.append(vg_error_codes[e])
+        e = vgGetError()
+    raise OpenVGError(", ".join(error_list))
+
+
 def get_error():
     return <unsigned int>vgGetError()
     
@@ -371,8 +387,10 @@ def finish():
 def SetParam(int paramType, value):
     if isinstance(value, float):
         vgSetf(<_VGParamType>paramType, value)
+        check_error()
     elif isinstance(value, int):
         vgSeti(<_VGParamType>paramType, value)
+        check_error()
     else:
         raise TypeError("value must be float or int. Got %r instead"%value)
     
@@ -403,12 +421,14 @@ def load_matrix(list m):
     for i in xrange(9):
         mc[i] = m[i]
     vgLoadMatrix(mc)
+    check_error()
     
 def get_matrix():
     cdef:
         _VGfloat *m
         int i
     vgGetMatrix(m)
+    check_error()
     out = []
     for i in xrange(9):
         out.append(m[i])
@@ -423,6 +443,7 @@ def mult_matrix(list m):
     for i in xrange(9):
         mc[i] = m[i]
     vgMultMatrix(mc)
+    check_error()
     
 def translate(_VGfloat tx, _VGfloat ty):
     vgTranslate(tx, ty)
@@ -511,6 +532,7 @@ def SetClearColour(_VGfloat r, _VGfloat g, _VGfloat b, _VGfloat a):
     c[2]=b
     c[3]=a
     vgSetfv(VG_CLEAR_COLOR, 4, c)
+    check_error()
     
 def Clear(_VGint x, _VGint y, _VGint width, _VGint height):
     vgClear(x, y, width, height)
@@ -519,9 +541,11 @@ def Clear(_VGint x, _VGint y, _VGint width, _VGint height):
 cdef class Handle:
     def set_param_f(self, _VGint paramType, _VGfloat value):
         vgSetParameterf(<_VGHandle>self._vg_handle, paramType, value)
+        check_error()
     
     def set_param_i(self, _VGint paramType, _VGint value):
         vgSetParameteri(<_VGHandle>self._vg_handle, paramType, value)
+        check_error()
         
     def set_param_fv(self, _VGint paramType, list val_list):
         cdef:
@@ -537,6 +561,7 @@ cdef class Handle:
                 raise MemoryError("Could not allocate buffer for list data")
             vgSetParameterfv(<_VGHandle>self._vg_handle, paramType,
                                       count, values)
+            check_error()
         finally:
             free(values)
             
@@ -554,25 +579,32 @@ cdef class Handle:
                 raise MemoryError("Could not allocate buffer for list data")
             vgSetParameteriv(<_VGHandle>self._vg_handle, paramType,
                                       count, values)
+            check_error()
         finally:
             free(values)
     
     def get_param_f(self, _VGint paramType):
-        return vgGetParameterf(<_VGHandle>self._vg_handle, paramType)
+        val = vgGetParameterf(<_VGHandle>self._vg_handle, paramType)
+        check_error()
+        return val
         
     def get_param_i(self, _VGint paramType):
-        return vgGetParameteri(<_VGHandle>self._vg_handle, paramType)
+        val = vgGetParameteri(<_VGHandle>self._vg_handle, paramType)
+        check_error()
+        return val
         
     def get_param_f_list(self, _VGint paramType):
         cdef:
             _VGint size, i
             _VGfloat *values
         size = vgGetParameterVectorSize(<_VGHandle>self._vg_handle, paramType)
+        check_error()
         values = <_VGfloat*>malloc(sizeof(_VGfloat)*size)
         try:
             if values is not NULL:
                 vgGetParameterfv(<_VGHandle>self._vg_handle, paramType,
                                         size, values)
+                check_error()
                 out = []
                 for i in xrange(size):
                     out.append(values[i])
@@ -587,11 +619,13 @@ cdef class Handle:
             _VGint size, i
             _VGint *values
         size = vgGetParameterVectorSize(<_VGHandle>self._vg_handle, paramType)
+        check_error()
         values = <_VGint*>malloc(sizeof(_VGint)*size)
         try:
             if values is not NULL:
                 vgGetParameteriv(<_VGHandle>self._vg_handle, paramType,
                                         size, values)
+                check_error()
                 out = []
                 for i in xrange(size):
                     out.append(values[i])
@@ -610,12 +644,15 @@ cdef class Path:
                                     4,
                                     3,
                                     VG_PATH_CAPABILITY_ALL)
+        check_error()
                                     
     def __dealloc__(self):
         vgDestroyPath(self._vg_handle)
+        check_error()
         
     def DrawPath(self):
         vgDrawPath(self._vg_handle, VG_STROKE_PATH)
+        check_error()
         
     def AppendPathData(self, list cmds, list coords):
         cdef:
@@ -632,6 +669,7 @@ cdef class Path:
             _coords[2*i] = coords[i][0]
             _coords[2*i+1] = coords[i][1]
         vgAppendPathData(self._vg_handle, N, _cmds, <void*>_coords)
+        check_error()
         free(_cmds)
         free(_coords)
         
@@ -722,73 +760,150 @@ _paint_reg = {}
 cdef class Paint:
     def __cinit__(self):
         self._vg_handle = vgCreatePaint()
+        check_error()
         _paint_reg[<int>self._vg_handle] = self
     
     def __dealloc__(self):
         vgDestroyPaint(self._vg_handle)
+        check_error()
         del _paint_reg[<int>self._vg_handle]
         
     def set_color(self, _VGuint rgba):
         vgSetColor(self._vg_handle, rgba)
+        check_error()
     
     def get_color(self):
         cdef:
             _VGuint rgba
         rgba = vgGetColor(self._vg_handle)
+        check_error()
         
     def paint_pattern(Image image):
         vgPaintPattern(self._vg_handle, image._vg_handle)
+        check_error()
         
     
 def set_paint(Paint paint, _VGbitfield paintModes):
     vgSetPaint(paint._vg_handle, paintModes)
+    check_error()
     
 def get_paint(_VGPaintMode paintMode):
     cdef:
         _VGPaint c_paint
     c_paint = vgGetPaint(paintMode)
+    check_error()
     try:
         return _paint_reg[<int>c_paint]
     except KeyError:
         return None
         
+        
+_image_reg = {}
+        
 cdef class Image:
-    pass
+    def __init__(self, _VGint width, _VGint height, 
+                  _VGImageFormat format=VGImageFormat.VG_sRGBA_8888,
+                  _VGbitfield allowedQuality=VGImageQuality.VG_IMAGE_QUALITY_BETTER):
+        self._vg_handle = vgCreateImage(format, width, height, allowedQuality)
+        check_error()
+        global _image_reg
+        _image_reg[<int>self._vg_handle] = self
+        
+    def __dealloc__(self):
+        del _image_reg[self]
+        vgDestroyImage(self._vg_handle)
+        check_error()
+        
+    def clear(self, _VGint x, _VGint y, _VGint width, _VGint height):
+        vgClearImage(self._vg_handle, x, y, width, height)
+        check_error()
+        
+    def draw(self):
+        vgDrawImage(self._vg_handle)
+        check_error()
+        
+    def set_subimage_data(self, object[unsigned int, ndim=2, mode='c'] data,
+                          _VGint dataStride,   _VGImageFormat dataFormat,
+                          _VGint x, _VGint y, _VGint width, _VGint height):
+        cdef _VGImageFormat format=VGImageFormat.VG_sRGBA_8888
+        vgImageSubData(self._vg_handle, <void *>data.buf, dataStride,
+                        format, x, y, width, height)
+        check_error()
     
-    #~ ###/* Images */
-    #~ _VGImage vgCreateImage(_VGImageFormat format,
-                                  #~ _VGint width, _VGint height,
-                                  #~ _VGbitfield allowedQuality)
-    #~ void vgDestroyImage(_VGImage image)
-    #~ void vgClearImage(_VGImage image,
-                              #~ _VGint x, _VGint y, _VGint width, _VGint height)
-    #~ void vgImageSubData(_VGImage image,   ###does this function set the data?###
-                                #~ void * data, _VGint dataStride,
-                                #~ _VGImageFormat dataFormat,
-                                #~ _VGint x, _VGint y, _VGint width, _VGint height)
-    #~ void vgGetImageSubData(_VGImage image,
+    def get_subimage_data(self, _VGint x, _VGint y, _VGint width, _VGint height,
+                          _VGint dataStride):
+            #~ void vgGetImageSubData(_VGImage image,
                                    #~ void * data, _VGint dataStride,
                                    #~ _VGImageFormat dataFormat,
                                    #~ _VGint x, _VGint y,
                                    #~ _VGint width, _VGint height)
-    #~ _VGImage vgChildImage(_VGImage parent,
+        cdef:
+            _VGuint *buf
+            bytes out
+            
+        buf = <_VGuint*>malloc(width*height*sizeof(_VGuint))
+        try:
+            vgGetImageSubData(self._vg_handle, <void*>buf, dataStride,
+                              VGImageFormat.VG_sRGBA_8888, x, y, width, height)
+            check_error()
+            out = buf[:width*height*sizeof(_VGuint)]
+        finally:
+            free(buf)
+        return out
+                                   
+    def child_image(self,  _VGint x, _VGint y, _VGint width, _VGint height):
+        #~ _VGImage vgChildImage(_VGImage parent,
                                  #~ _VGint x, _VGint y, _VGint width, _VGint height)
-    #~ _VGImage vgGetParent(_VGImage image) 
-    #~ void vgCopyImage(_VGImage dst, _VGint dx, _VGint dy,
+        cdef Image child
+        child = object.__new__(Image)
+        child._vg_handle = vgChildImage(self._vg_handle, x, y, width, height)
+        check_error()
+        _image_reg[<int>child._vg_handle] = child
+        return child
+                                 
+    def get_parent(self):
+        cdef _VGImage c_parent
+        c_parent = vgGetParent(self._vg_handle)
+        check_error()
+        return _image_reg[<int>c_parent]
+    
+    def copy_image(self, _VGint dx, _VGint dy, _VGImage src, _VGint sx, _VGint sy,
+                    _VGint width, _VGint height, _VGboolean dither):
+        #~ void vgCopyImage(_VGImage dst, _VGint dx, _VGint dy,
                              #~ _VGImage src, _VGint sx, _VGint sy,
                              #~ _VGint width, _VGint height,
                              #~ _VGboolean dither)
-    #~ void vgDrawImage(_VGImage image)
-    #~ void vgSetPixels(_VGint dx, _VGint dy,
+        vgCopyImage(self._vg_handle, dx, dy, src._vg_handle, sx, sy, width, height, dither)
+        check_error()
+                   
+    def draw_pixels(_VGint dx, _VGint dy, _VGint sx, _VGint sy,
+                             _VGint width, _VGint height):
+        """writes Image pixel data directly to the current surface.
+            Equivalent to a blit"""
+            #~ void vgSetPixels(_VGint dx, _VGint dy,
                              #~ _VGImage src, _VGint sx, _VGint sy,
                              #~ _VGint width, _VGint height)
+        vgSetPixels(dx, dy, self._vg_handle, sx, sy, width, height)
+        check_error()
+                               
+    def from_surface(self, _VGint dx, _VGint dy, _VGint sx, _VGint sy,
+                                        _VGint width, _VGint height):
+        """copies pixel data from the current surface into the Image"""
+    #~ void vgGetPixels(_VGImage dst, _VGint dx, _VGint dy,
+                             #~ _VGint sx, _VGint sy,
+                             #~ _VGint width, _VGint height)
+        vgGetPixels(self._vg_handle, dx, dy, sx, sy, width, height)
+        check_error()
+        
+def write_pixels(data[unsigned int, ndims=2], _VGint dataStride, _VGint dx, _VGint dy,
+                                        _VGint width, _VGint height):
     #~ void vgWritePixels(void * data, _VGint dataStride,
                                #~ _VGImageFormat dataFormat,
                                #~ _VGint dx, _VGint dy,
                                #~ _VGint width, _VGint height)
-    #~ void vgGetPixels(_VGImage dst, _VGint dx, _VGint dy,
-                             #~ _VGint sx, _VGint sy,
-                             #~ _VGint width, _VGint height)
+    vgWritePixels(<void*>data.buf, dataStride, dx, dy, width, height)
+    check_error()
+        
     #~ void vgReadPixels(void * data, _VGint dataStride,
                               #~ _VGImageFormat dataFormat,
                               #~ _VGint sx, _VGint sy,
