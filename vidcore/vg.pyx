@@ -714,19 +714,34 @@ cdef class Path:
     #~ void vgDrawPath(_VGPath path, _VGbitfield paintModes)
     #~ 
         
+_font_reg = {}
 
 cdef class Font:
-    pass
+    def __cinit__(self, _VGint glyphCapacityHint):
+        self._vg_handle = vgCreateFont(glyphCapacityHint)
+        check_error()
+        global _font_reg
+        _font_reg[<int>self._vg_handle] = self
     
-   #~ ###/* Text */
-    #~ _VGFont vgCreateFont(_VGint glyphCapacityHint)
-    #~ void vgDestroyFont(_VGFont font)
+    def __dealloc__(self):
+        del _font_reg[<int>self._vg_handle]
+        vgDestroyFont(self._vg_handle)
+        check_error()
+    
+    def set_glyph_to_path(self, _VGuint glyphIndex, Path path, _VGboolean isHinted,
+                                        list glyphOrigin, list escapement):
+        cdef: 
+            _VGfloat _origin[2], _escapement[2]
     #~ void vgSetGlyphToPath(_VGFont font,
                                               #~ _VGuint glyphIndex,
                                               #~ _VGPath path,
                                               #~ _VGboolean isHinted,
                                               #~ _VGfloat glyphOrigin [2],
                                               #~ _VGfloat escapement[2])
+        vgSetGlyphToPath(self._vg_handle, glyphIndex, path._vg_handle, isHinted,
+                                    _origin, _escapement)
+        check_error()
+        
     #~ void vgSetGlyphToImage(_VGFont font,
                                                #~ _VGuint glyphIndex,
                                                #~ _VGImage image,
@@ -745,15 +760,6 @@ cdef class Font:
                                           #~ _VGbitfield paintModes,
                                           #~ _VGboolean allowAutoHinting)
     
-    
-    #~ ###/* Paint */
-    #~ _VGPaint vgCreatePaint()
-    #~ void vgDestroyPaint(_VGPaint paint)
-    #~ void vgSetPaint(_VGPaint paint, _VGbitfield paintModes)
-    #~ _VGPaint vgGetPaint(_VGPaintMode paintMode)
-    #~ void vgSetColor(_VGPaint paint, _VGuint rgba)
-    #~ _VGuint vgGetColor(_VGPaint paint)
-    #~ void vgPaintPattern(_VGPaint paint, _VGImage pattern)
     
 _paint_reg = {}
 
