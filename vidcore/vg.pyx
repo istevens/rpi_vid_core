@@ -395,16 +395,81 @@ def SetParam(int paramType, value):
         raise TypeError("value must be float or int. Got %r instead"%value)
     
 #~ ###/* Getters and Setters */
+def set_fv(_VGParamType ptype, list vals):
     #~ void vgSetfv(_VGParamType type, _VGint count,
                          #~ _VGfloat * values)
+    cdef:
+        _VGfloat *c_vals
+        int count=len(vals), i
+    try:
+        c_vals = <_VGfloat*>malloc(sizeof(_VGfloat)*count)
+        for i in xrange(count):
+            c_vals[i] = vals[i]
+        vgSetfv(ptype, count, c_vals)
+        check_error()
+    finally:
+        free(c_vals)
+        
+def set_iv(_VGParamType ptype, list vals):
     #~ void vgSetiv(_VGParamType type, _VGint count,
                          #~ _VGint * values)
-#~ 
-    #~ _VGfloat vgGetf(_VGParamType type)
-    #~ _VGint vgGeti(_VGParamType type)
-    #~ _VGint vgGetVectorSize(_VGParamType type)
+    cdef:
+        _VGint *c_vals
+        int count=len(vals), i
+    try:
+        c_vals = <_VGint*>malloc(sizeof(_VGint)*count)
+        for i in xrange(count):
+            c_vals[i] = vals[i]
+        vgSetiv(ptype, count, c_vals)
+        check_error()
+    finally:
+        free(c_vals)
+    
+def get_fv(_VGParamType ptype):
     #~ void vgGetfv(_VGParamType type, _VGint count, _VGfloat * values)
+    cdef:
+        list out=[]
+        _VGint count, i
+        _VGfloat* c_vals
+        
+    count = vgGetVectorSize(ptype)
+    try:
+        c_vals = <_VGfloat*>malloc(sizeof(_VGfloat)*count)
+        vgGetfv(ptype, count, c_vals)
+        check_error()
+        for i in xrange(count):
+            out.append(c_vals[i])
+        return out
+    finally:
+        free(c_vals)
+        
+def get_iv(_VGParamType ptype):
     #~ void vgGetiv(_VGParamType type, _VGint count, _VGint * values)
+    cdef:
+        list out=[]
+        _VGint count, i
+        _VGint* c_vals
+        
+    count = vgGetVectorSize(ptype)
+    try:
+        c_vals = <_VGint*>malloc(sizeof(_VGint)*count)
+        vgGetfv(ptype, count, c_vals)
+        check_error()
+        for i in xrange(count):
+            out.append(c_vals[i])
+        return out
+    finally:
+        free(c_vals)
+    
+def get_f(_VGParamType ptype):
+    #~ _VGfloat vgGetf(_VGParamType type)
+    return vgGetf(ptype)
+
+def get_i(_VGParamType ptype):
+    #~ _VGint vgGeti(_VGParamType type)
+    return vgGeti(ptype)
+    #~ _VGint vgGetVectorSize(_VGParamType type)
+    
 
 
     ###/* Matrix Manipulation */
@@ -458,14 +523,22 @@ def rotate(_VGfloat angle):
     vgRotate(angle)
 
     #~ ###/* Masking and Clearing */
+def mask(Handle mask, _VGMaskOperation operation, 
+         _VGint x, _VGint y, _VGint width, _VGint height):
     #~ void vgMask(_VGHandle mask, _VGMaskOperation operation,
                                      #~ _VGint x, _VGint y,
                                      #~ _VGint width, _VGint height)
+    vgMask(mask._vg_handle, operation, x, y, width, height)
+    check_error() 
+                 
+def render_to_mask(Path path, _VGbitfield paintModes, _VGMaskOperation operation):                   
     #~ void vgRenderToMask(_VGPath path,
                                             #~ _VGbitfield paintModes,
                                             #~ _VGMaskOperation operation)
+    vgRenderToMask(Path._vg_handle, paintModes, operation)
+    check_error()
 
-    #~ void vgClear(_VGint x, _VGint y, _VGint width, _VGint height)
+   
 #~ 
 
 #~ 
@@ -525,7 +598,7 @@ def rotate(_VGfloat angle):
     
 
 
-def SetClearColour(_VGfloat r, _VGfloat g, _VGfloat b, _VGfloat a):
+def set_clear_colour(_VGfloat r, _VGfloat g, _VGfloat b, _VGfloat a):
     cdef _VGfloat c[4]
     c[0]=r
     c[1]=g
@@ -534,7 +607,8 @@ def SetClearColour(_VGfloat r, _VGfloat g, _VGfloat b, _VGfloat a):
     vgSetfv(VG_CLEAR_COLOR, 4, c)
     check_error()
     
-def Clear(_VGint x, _VGint y, _VGint width, _VGint height):
+def clear(_VGint x, _VGint y, _VGint width, _VGint height):
+     #~ void vgClear(_VGint x, _VGint y, _VGint width, _VGint height)
     vgClear(x, y, width, height)
 
 
@@ -636,83 +710,176 @@ cdef class Handle:
         return out
 
 
+_path_reg = {}
+
 cdef class Path:
-    def __cinit__(self):
-        self._vg_handle = vgCreatePath(VG_PATH_FORMAT_STANDARD,
-                                    VG_PATH_DATATYPE_F,
-                                    1.0, 0.0,
-                                    4,
-                                    3,
-                                    VG_PATH_CAPABILITY_ALL)
-        check_error()
-                                    
-    def __dealloc__(self):
-        vgDestroyPath(self._vg_handle)
-        check_error()
-        
-    def DrawPath(self):
-        vgDrawPath(self._vg_handle, VG_STROKE_PATH)
-        check_error()
-        
-    def AppendPathData(self, list cmds, list coords):
-        cdef:
-            _VGint N=len(cmds)
-            _VGubyte * _cmds
-            _VGfloat * _coords
-            unsigned int i
-        if len(cmds) != len(coords):
-            raise ValueError("Command list must have same length as coordinate list")
-        _cmds = <_VGubyte*>malloc(sizeof(_VGubyte)*N)
-        _coords = <_VGfloat*>malloc(sizeof(_VGfloat)*2*N)
-        for i in xrange(N):
-            _cmds[i] = cmds[i]
-            _coords[2*i] = coords[i][0]
-            _coords[2*i+1] = coords[i][1]
-        vgAppendPathData(self._vg_handle, N, _cmds, <void*>_coords)
-        check_error()
-        free(_cmds)
-        free(_coords)
-        
-    #~ ### /*Path creation and manipulation */
-    #~ _VGPath vgCreatePath(_VGint pathFormat,
+    def __cinit__(self, _VGint pathFormat=VG_PATH_FORMAT_STANDARD,
+                  _VGPathDatatype datatype=VG_PATH_DATATYPE_F,
+                  _VGfloat scale=1.0, _VGfloat bias=0.0,
+                  _VGint segmentCapacityHint=0,
+                  _VGint coordCapacityHint=0,
+                  _VGbitfield capabilities=0):
+        #~ _VGPath vgCreatePath(_VGint pathFormat,
                                 #~ _VGPathDatatype datatype,
                                 #~ _VGfloat scale, _VGfloat bias,
                                 #~ _VGint segmentCapacityHint,
                                 #~ _VGint coordCapacityHint,
                                 #~ _VGbitfield capabilities)
-    #~ void vgClearPath(_VGPath path, _VGbitfield capabilities)
-    #~ void vgDestroyPath(_VGPath path)
-    #~ void vgRemovePathCapabilities(_VGPath path,
-                                  #~ _VGbitfield capabilities)
-    #~ _VGbitfield vgGetPathCapabilities(_VGPath path)
-    #~ void vgAppendPath(_VGPath dstPath, _VGPath srcPath)
-    #~ void vgAppendPathData(_VGPath dstPath,
+        self._vg_handle = vgCreatePath(pathFormat,
+                                    datatype,
+                                    scale, bias,
+                                    segmentCapacityHint,
+                                    coordCapacityHint,
+                                    capabilities)
+        check_error()
+        global _path_reg
+        _path_reg[<int>self._vg_handle] = self
+                                    
+    def __dealloc__(self):
+        #~ void vgDestroyPath(_VGPath path)
+        del _path_reg[<int>self._vg_handle]
+        vgDestroyPath(self._vg_handle)
+        check_error()
+        
+    def draw(self):
+        #~ void vgDrawPath(_VGPath path, _VGbitfield paintModes)
+        vgDrawPath(self._vg_handle, VG_STROKE_PATH)
+        check_error()
+        
+    def append_data(self, list cmds, list coords):
+         #~ void vgAppendPathData(_VGPath dstPath,
                                   #~ _VGint numSegments,
                                   #~ _VGubyte * pathSegments,
                                   #~ void * pathData)
+        cdef:
+            tuple item 
+            _VGint N=len(cmds), total
+            _VGubyte * _cmds=NULL
+            _VGfloat * _coords=NULL
+            _VGfloat val
+            unsigned int i,j=0
+        if len(cmds) != len(coords):
+            raise ValueError("Command list must have same length as coordinate list")
+        total = sum(len(item) for item in coords)
+        try:
+            _cmds = <_VGubyte*>malloc(sizeof(_VGubyte)*N)
+            _coords = <_VGfloat*>malloc(sizeof(_VGfloat)*total)
+            for i in xrange(N):
+                _cmds[i] = cmds[i]
+                item = coords[i]
+                for val in item:
+                    _coords[j] = val
+                    j += 1
+            vgAppendPathData(self._vg_handle, N, _cmds, <void*>_coords)
+            check_error()
+        finally:
+            free(_cmds)
+            free(_coords)
+        
+    def clear(self, _VGbitfield capabilities):
+    #~ void vgClearPath(_VGPath path, _VGbitfield capabilities)
+        vgClearPath(self._vg_handle, capabilities)
+        check_error()
+    
+    def remove_capabilities(self, _VGbitfield capabilities):
+    #~ void vgRemovePathCapabilities(_VGPath path,
+                                  #~ _VGbitfield capabilities)
+        vgRemovePathCapabilities(self._vg_handle, capabilities)
+        check_error()
+        
+    def get_capabilities(self):
+        cdef _VGbitfield caps
+    #~ _VGbitfield vgGetPathCapabilities(_VGPath path)
+        caps = vgGetPathCapabilities(self._vg_handle)
+        check_error()
+        return caps
+    
+    def append(self, Path src):
+    #~ void vgAppendPath(_VGPath dstPath, _VGPath srcPath)
+        vgAppendPath(self._vg_handle, src._vg_handle)
+        check_error()
+        
+    def modify_coords(self, _VGint startIndex, list segments):
     #~ void vgModifyPathCoords(_VGPath dstPath, _VGint startIndex,
                                     #~ _VGint numSegments,
                                     #~ void * pathData)
+        cdef:
+            tuple item
+            _VGfloat val
+            _VGint n_segments=len(segments), i, total
+            void * data
+        total = sum(len(item) for item in segments)
+        try:
+            data = <_VGfloat*>malloc(sizeof(_VGfloat)*total)
+            i = 0
+            for item in segments:
+                for val in item:
+                    data[i] = val
+                    i += 1
+            vgModifyPathCoords(self._vg_handle, startIndex,
+                               n_segments, <void *>data)
+            check_error()
+        finally:
+            free(data)
+                                    
+    def transform(self, Path src):
     #~ void vgTransformPath(_VGPath dstPath, _VGPath srcPath)
-    #~ _VGboolean vgInterpolatePath(_VGPath dstPath,
+        vgTransformPath(self._vg_handle, src._vg_handle)
+        check_error()
+        
+    def interpolate(self, Path start, Path, end, _VGfloat amount):
+        cdef _VGboolean ret
+        #~ _VGboolean vgInterpolatePath(_VGPath dstPath,
                                         #~ _VGPath startPath,
                                         #~ _VGPath endPath,
                                         #~ _VGfloat amount)
+        ret = vgInterpolatePath(self._vg_handle, start._vg_handle,
+                                end._vg_handle, amount)
+        check_error()
+        return bool(ret)
+                                        
+    def length(self, _VGint startSegment, _VGint numSegments):
     #~ _VGfloat vgPathLength(_VGPath path,
                                  #~ _VGint startSegment, _VGint numSegments)
+        cdef _VGfloat l
+        l = vgPathLength(self._vg_handle, startSegment, numSegments)
+        check_error()
+        return l
+    
+    def point_along_path(self, _VGint startSegment, _VGint numSegments,
+                         _VGfloat distance):
+        cdef:
+            _VGfloat x, y, tangentX, tangentY
     #~ void vgPointAlongPath(_VGPath path,
                                   #~ _VGint startSegment, _VGint numSegments,
                                   #~ _VGfloat distance,
                                   #~ _VGfloat * x, _VGfloat * y,
                                   #~ _VGfloat * tangentX, _VGfloat * tangentY)
+        vgPointAlongPath(self._vg_handle, startSegment, numSegments,
+                         distance, &x, &y, &tangentX, &tangentY)
+        check_error()
+        return (x, y, tangentX, tangentY)
+                                  
+    def bounds(self):
+        cdef:
+            _VGfloat minX, minY, width, height
     #~ void vgPathBounds(_VGPath path,
                               #~ _VGfloat * minX, _VGfloat * minY,
                               #~ _VGfloat * width, _VGfloat * height)
+        vgPathBounds(self._vg_handle, &minX, &minY, &width, &height)
+        check_error()
+        return (minX, minY, width, height)
+    
+    def transformed_bounds(self):
     #~ void vgPathTransformedBounds(_VGPath path,
                                          #~ _VGfloat * minX, _VGfloat * minY,
                                          #~ _VGfloat * width, _VGfloat * height)
-    #~ void vgDrawPath(_VGPath path, _VGbitfield paintModes)
-    #~ 
+        cdef:
+            _VGfloat minX, minY, width, height
+        vgPathTransformedBounds(self._vg_handle, &minX, &minY, &width, &height)
+        check_error()
+        return (minX, minY, width, height)
+
         
 _font_reg = {}
 
@@ -732,6 +899,10 @@ cdef class Font:
                                         list glyphOrigin, list escapement):
         cdef: 
             _VGfloat _origin[2], _escapement[2]
+        _origin[0] = glyphOrigin[0]
+        _origin[1] = glyphOrigin[1]
+        _escapement[0] = escapement[0]
+        _escapement[1] = escapement[1]
     #~ void vgSetGlyphToPath(_VGFont font,
                                               #~ _VGuint glyphIndex,
                                               #~ _VGPath path,
@@ -742,16 +913,38 @@ cdef class Font:
                                     _origin, _escapement)
         check_error()
         
+    def set_glyph_to_image(self, _VGuint glyphIndex, Image image,
+                           list glyphOrigin, list escapement):
+        cdef: 
+            _VGfloat _origin[2], _escapement[2]
+        _origin[0] = glyphOrigin[0]
+        _origin[1] = glyphOrigin[1]
+        _escapement[0] = escapement[0]
+        _escapement[1] = escapement[1]
     #~ void vgSetGlyphToImage(_VGFont font,
                                                #~ _VGuint glyphIndex,
                                                #~ _VGImage image,
                                                #~ _VGfloat glyphOrigin [2],
                                                #~ _VGfloat escapement[2])
-    #~ void vgClearGlyph(_VGFont font,_VGuint glyphIndex)
+        vgSetGlyphToImage(self._vg_handle, glyphIndex, image._vg_handle,
+                          _origin, _escapement)
+        check_error()
+        
+    def clear_glyph(self, _VGuint glyphIndex):
+        vgClearGlyph(self._vg_handle, glyphIndex)
+        check_error()
+        
+    def draw_glyph(self, _VGuint glyphIndex, _VGbitfield paintModes,
+                                         _VGboolean allowAutoHinting):
     #~ void vgDrawGlyph(_VGFont font, 
                                          #~ _VGuint glyphIndex,
                                          #~ _VGbitfield paintModes,
                                          #~ _VGboolean allowAutoHinting)
+        vgDrawGlyph(self._vg_handle, glyphIndex, paintModes, allowAutoHinting)
+        check_error()
+        
+    def draw_glyphs(self, list indices, list adjust_x, list adjust_y,
+                    _VGbitfield paintModes, _VGboolean allowAutoHinting):
     #~ void vgDrawGlyphs(_VGFont font,
                                           #~ _VGint glyphCount,
                                           #~ _VGuint *glyphIndices,
@@ -759,6 +952,33 @@ cdef class Font:
                                           #~ _VGfloat *adjustments_y,
                                           #~ _VGbitfield paintModes,
                                           #~ _VGboolean allowAutoHinting)
+        cdef:
+            _VGint count=len(indices), i
+            _VGuint* glyphIndices=NULL,
+            _VGfloat* adjustments_x=NULL, adjustments_y=NULL
+        assert len(indices) == len(adjust_x)
+        assert len(indices) == len(adjust_y)
+        try:
+            glyphIndices = <_VGuint*>malloc(sizeof(_VGuint)*count)
+            if glyphIndices is NULL:
+                raise MemoryError("Couldn't allocate glyph index array")
+            adjustments_x = <_VGfloat*>malloc(sizeof(_VGfloat)*count)
+            if adjustments_x is NULL:
+                raise MemoryError("Couldn't allocate adjustments_x array")
+            adjustments_y = <_VGfloat*>malloc(sizeof(_VGfloat)*count)
+            if adjustments_y is NULL:
+                raise MemoryError("Couldn't allocate adjustments_y array")
+            for i in xrange(count):
+                glyphIndices[i] = indices[i]
+                adjustments_x[i] = adjust_x[i]
+                adjustments_y[i] = adjust_y[i]
+            vgDrawGlyphs(self._vg_handle, count, glyphIndices, adjustments_x,
+                         adjustments_y, paintModes, allowAutoHinting)
+            check_error()
+        finally:
+            free(glyphIndices)
+            free(adjustments_x)
+            free(adjustments_y)
     
     
 _paint_reg = {}
@@ -919,15 +1139,30 @@ def write_pixels(data[unsigned int, ndims=2], _VGint dataStride, _VGint dx, _VGi
                               #~ _VGint width, _VGint height)
         
 cdef class MaskLayer:
-    pass
-
-    #~ _VGMaskLayer vgCreateMaskLayer(_VGint width, _VGint height)
+    def __cinit__(self, _VGint width, _VGint height):
+        self._vg_handle = vgCreateMaskLayer(width, height)
+        #~ _VGMaskLayer vgCreateMaskLayer(_VGint width, _VGint height)
+        check_error()
+    
+    def __dealloc__(self):
     #~ void vgDestroyMaskLayer(_VGMaskLayer maskLayer)
+        vgDestroyMask(self._vg_handle)
+        check_error()
+        
+    def fill(self, _VGint x, _VGint y,  _VGint width, _VGint height, _VGfloat value):
     #~ void vgFillMaskLayer(_VGMaskLayer maskLayer,
                                              #~ _VGint x, _VGint y,
                                              #~ _VGint width, _VGint height,
                                              #~ _VGfloat value)
+        vgFillMaskLayer(self._vg_handle, x, y, width, height, value)
+        check_error()
+        
+    def copy(self, _VGint dx, _VGint dy, _VGint sx, _VGint sy, _VGint width, _VGint height):
     #~ void vgCopyMask(_VGMaskLayer maskLayer,
                                         #~ _VGint dx, _VGint dy,
                                         #~ _VGint sx, _VGint sy,
                                         #~ _VGint width, _VGint height)
+        vgCopyMask(self._vg_handle, dx, dy, sx, sy, width, height)
+        check_error()
+        
+        
