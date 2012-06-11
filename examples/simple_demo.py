@@ -67,8 +67,8 @@ if __name__=="__main__":
 
     def draw():
         print "beging drawing ...",
-        vg.SetClearColour(1.0,0.0,1.0,1.0)
-        vg.Clear(0,0,300,200)
+        vg.set_clear_colour(1.0,0.0,1.0,1.0)
+        vg.clear(0,0,300,200)
         print "...end drawing"
         
     mainloop(dpy, surf, ctx, draw)

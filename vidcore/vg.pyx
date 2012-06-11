@@ -453,7 +453,7 @@ def get_iv(_VGParamType ptype):
     count = vgGetVectorSize(ptype)
     try:
         c_vals = <_VGint*>malloc(sizeof(_VGint)*count)
-        vgGetfv(ptype, count, c_vals)
+        vgGetiv(ptype, count, c_vals)
         check_error()
         for i in xrange(count):
             out.append(c_vals[i])
@@ -807,7 +807,7 @@ cdef class Path:
             tuple item
             _VGfloat val
             _VGint n_segments=len(segments), i, total
-            void * data
+            _VGfloat* data
         total = sum(len(item) for item in segments)
         try:
             data = <_VGfloat*>malloc(sizeof(_VGfloat)*total)
@@ -955,18 +955,19 @@ cdef class Font:
         cdef:
             _VGint count=len(indices), i
             _VGuint* glyphIndices=NULL,
-            _VGfloat* adjustments_x=NULL, adjustments_y=NULL
+            _VGfloat* adjustments_x=NULL
+            _VGfloat* adjustments_y=NULL
         assert len(indices) == len(adjust_x)
         assert len(indices) == len(adjust_y)
         try:
             glyphIndices = <_VGuint*>malloc(sizeof(_VGuint)*count)
-            if glyphIndices is NULL:
+            if glyphIndices == NULL:
                 raise MemoryError("Couldn't allocate glyph index array")
             adjustments_x = <_VGfloat*>malloc(sizeof(_VGfloat)*count)
-            if adjustments_x is NULL:
+            if adjustments_x == NULL:
                 raise MemoryError("Couldn't allocate adjustments_x array")
             adjustments_y = <_VGfloat*>malloc(sizeof(_VGfloat)*count)
-            if adjustments_y is NULL:
+            if adjustments_y == NULL:
                 raise MemoryError("Couldn't allocate adjustments_y array")
             for i in xrange(count):
                 glyphIndices[i] = indices[i]
@@ -1004,7 +1005,7 @@ cdef class Paint:
         rgba = vgGetColor(self._vg_handle)
         check_error()
         
-    def paint_pattern(Image image):
+    def paint_pattern(self, Image image):
         vgPaintPattern(self._vg_handle, image._vg_handle)
         check_error()
         
@@ -1056,26 +1057,27 @@ cdef class Image:
                         format, x, y, width, height)
         check_error()
     
-    def get_subimage_data(self, _VGint x, _VGint y, _VGint width, _VGint height,
-                          _VGint dataStride):
-            #~ void vgGetImageSubData(_VGImage image,
-                                   #~ void * data, _VGint dataStride,
-                                   #~ _VGImageFormat dataFormat,
-                                   #~ _VGint x, _VGint y,
-                                   #~ _VGint width, _VGint height)
-        cdef:
-            _VGuint *buf
-            bytes out
-            
-        buf = <_VGuint*>malloc(width*height*sizeof(_VGuint))
-        try:
-            vgGetImageSubData(self._vg_handle, <void*>buf, dataStride,
-                              VGImageFormat.VG_sRGBA_8888, x, y, width, height)
-            check_error()
-            out = buf[:width*height*sizeof(_VGuint)]
-        finally:
-            free(buf)
-        return out
+    ###can't get conversion from buffer to bytes to work###
+    #~ def get_subimage_data(self, _VGint x, _VGint y, _VGint width, _VGint height,
+                          #~ _VGint dataStride):
+           #~ # #~ void vgGetImageSubData(_VGImage image,
+            #~ #                       #~ void * data, _VGint dataStride,
+             #~ #                      #~ _VGImageFormat dataFormat,
+              #~ #                     #~ _VGint x, _VGint y,
+               #~ #                    #~ _VGint width, _VGint height)
+        #~ cdef:
+            #~ _VGuint *buf
+            #~ bytes out
+            #~ 
+        #~ buf = <_VGuint*>malloc(width*height*sizeof(_VGuint))
+        #~ try:
+            #~ vgGetImageSubData(self._vg_handle, <void*>buf, dataStride,
+                              #~ VGImageFormat.VG_sRGBA_8888, x, y, width, height)
+            #~ check_error()
+            #~ out = bytes(buf[:width*height*sizeof(_VGuint)])
+        #~ finally:
+            #~ free(buf)
+        #~ return out
                                    
     def child_image(self,  _VGint x, _VGint y, _VGint width, _VGint height):
         #~ _VGImage vgChildImage(_VGImage parent,
@@ -1093,7 +1095,7 @@ cdef class Image:
         check_error()
         return _image_reg[<int>c_parent]
     
-    def copy_image(self, _VGint dx, _VGint dy, _VGImage src, _VGint sx, _VGint sy,
+    def copy_image(self, _VGint dx, _VGint dy, Image src, _VGint sx, _VGint sy,
                     _VGint width, _VGint height, _VGboolean dither):
         #~ void vgCopyImage(_VGImage dst, _VGint dx, _VGint dy,
                              #~ _VGImage src, _VGint sx, _VGint sy,
@@ -1102,7 +1104,7 @@ cdef class Image:
         vgCopyImage(self._vg_handle, dx, dy, src._vg_handle, sx, sy, width, height, dither)
         check_error()
                    
-    def draw_pixels(_VGint dx, _VGint dy, _VGint sx, _VGint sy,
+    def draw_pixels(self, _VGint dx, _VGint dy, _VGint sx, _VGint sy,
                              _VGint width, _VGint height):
         """writes Image pixel data directly to the current surface.
             Equivalent to a blit"""
@@ -1120,15 +1122,16 @@ cdef class Image:
                              #~ _VGint width, _VGint height)
         vgGetPixels(self._vg_handle, dx, dy, sx, sy, width, height)
         check_error()
-        
-def write_pixels(data[unsigned int, ndims=2], _VGint dataStride, _VGint dx, _VGint dy,
-                                        _VGint width, _VGint height):
+     
+###buffer syntax doesn't work ###
+#~ def write_pixels(data[unsigned int, ndims=2], _VGint dataStride, _VGint dx, _VGint dy,
+                                        #~ _VGint width, _VGint height):
     #~ void vgWritePixels(void * data, _VGint dataStride,
                                #~ _VGImageFormat dataFormat,
                                #~ _VGint dx, _VGint dy,
                                #~ _VGint width, _VGint height)
-    vgWritePixels(<void*>data.buf, dataStride, dx, dy, width, height)
-    check_error()
+    #~ vgWritePixels(<void*>data.buf, dataStride, dx, dy, width, height)
+    #~ check_error()
         
     #~ void vgReadPixels(void * data, _VGint dataStride,
                               #~ _VGImageFormat dataFormat,
@@ -1146,7 +1149,7 @@ cdef class MaskLayer:
     
     def __dealloc__(self):
     #~ void vgDestroyMaskLayer(_VGMaskLayer maskLayer)
-        vgDestroyMask(self._vg_handle)
+        vgDestroyMaskLayer(self._vg_handle)
         check_error()
         
     def fill(self, _VGint x, _VGint y,  _VGint width, _VGint height, _VGfloat value):
