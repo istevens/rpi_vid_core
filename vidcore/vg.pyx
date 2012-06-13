@@ -716,9 +716,9 @@ cdef class Path:
     def __cinit__(self, _VGint pathFormat=VG_PATH_FORMAT_STANDARD,
                   _VGPathDatatype datatype=VG_PATH_DATATYPE_F,
                   _VGfloat scale=1.0, _VGfloat bias=0.0,
-                  _VGint segmentCapacityHint=0,
-                  _VGint coordCapacityHint=0,
-                  _VGbitfield capabilities=0):
+                  _VGint segmentCapacityHint=4,
+                  _VGint coordCapacityHint=3,
+                  _VGbitfield capabilities=VG_PATH_CAPABILITY_ALL):
         #~ _VGPath vgCreatePath(_VGint pathFormat,
                                 #~ _VGPathDatatype datatype,
                                 #~ _VGfloat scale, _VGfloat bias,
@@ -741,9 +741,9 @@ cdef class Path:
         vgDestroyPath(self._vg_handle)
         check_error()
         
-    def draw(self):
+    def draw(self, _VGbitfield paintModes):
         #~ void vgDrawPath(_VGPath path, _VGbitfield paintModes)
-        vgDrawPath(self._vg_handle, VG_STROKE_PATH)
+        vgDrawPath(self._vg_handle, paintModes)
         check_error()
         
     def append_data(self, list cmds, list coords):
