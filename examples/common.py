@@ -48,3 +48,13 @@ def make_egl_context(win, flags):
     context = egl.CreateContext(display, config, None)
     egl.MakeCurrent(display, surface, surface, context)
     return (display, surface, context)
+
+
+def mainloop(display, surface, context, draw_func):
+    try:
+        while True:#for i in xrange(200):
+            time.sleep(0.1) #so we don't spin the CPU too much
+            draw_func()
+            egl.SwapBuffers(display, surface)
+    except KeyboardInterupt:
+        sys.exit(0)

@@ -1041,6 +1041,29 @@ cdef class Image:
         vgDestroyImage(self._vg_handle)
         check_error()
         
+    @staticmethod
+    def from_string(bytes data, _VGint W, _VGint H):
+        cdef:
+            Image vgimg
+        vgimg = Image(W,H)
+        vgImageSubData(vgimg._vg_handle, <void *>data, W*4,
+                        VGImageFormat.VG_sRGBA_8888, 0, 0, W, H)
+        check_error()
+        return vgimg
+        
+    def to_string(self):
+        cdef:
+            bytes data
+            _VGint W,H
+        W = vgGetParameteri(self._vg_handle, VG_IMAGE_WIDTH)
+        H = vgGetParameteri(self._vg_handle, VG_IMAGE_HEIGHT)
+        data = bytes(bytearray(W*H*4))
+        vgGetImageSubData(self._vg_handle, <void *>data, 
+                        W*4, VGImageFormat.VG_sRGBA_8888,
+                        0, 0, W, H)
+        check_error()
+        return data
+        
     def clear(self, _VGint x, _VGint y, _VGint width, _VGint height):
         vgClearImage(self._vg_handle, x, y, width, height)
         check_error()
