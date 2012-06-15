@@ -1,7 +1,7 @@
 import distribute_setup
 distribute_setup.use_setuptools()
 
-from setuptools import setup
+from setuptools import setup, find_packages
 #from distutils.core import setup
 from distutils.extension import Extension
 #from Cython.Distutils import build_ext
@@ -50,15 +50,32 @@ ext_modules = [
                     )
 	]
 
+try:
+    proc = subprocess.Popen(['hg','id','-t'], stdout=subprocess.PIPE)
+    output, unused_err = proc.communicate()
+    retcode = proc.poll()
+    ver = "unversioned"
+    if not retcode: #hg got the tag no OK
+        for ver in output.split():
+            if ver.strip()!="tip":
+                break
+        else:
+            ver="untagged"
+    open("vidcore/version.py",'wt').write("__version__='%s'\n"%ver)
+except OSError:
+    pass
+execfile("vidcore/version.py")
+
 setup(
   name = 'rpi_vid_core',
-  version="0.1alpha",
+  version=__version__,
   description="Core hardware-accelerated graphics libraries for the Raspberry Pi: OpenVG, EGL",
   #cmdclass = {'build_ext': build_ext},
   ext_modules = ext_modules,
   author="Bryan Cole",
   author_email="bryancole.cam@gmail.com",
   url="https://bitbucket.org/bryancole/rpi_vid_core",
-  zip_safe=True
+  zip_safe=True,
+  packages = find_packages()
 )
 
