@@ -1,0 +1,15 @@
+#freetype.pyxbld
+
+import os
+here = os.path.split(__file__)[0]
+
+def make_ext(modname, pyxfilename):
+    from distutils.extension import Extension
+    ext = Extension(name='vidcore.freetype',
+                    sources=['freetype.pyx'],
+                    extra_compile_args=[],
+                    libraries=['freetype'],
+                    library_dirs=[],
+                    include_dirs=[here,'/usr/include/freetype2']
+                    )
+    return ext
