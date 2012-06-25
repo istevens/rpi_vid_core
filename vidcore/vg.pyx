@@ -712,7 +712,7 @@ cdef class Handle:
 
 _path_reg = {}
 
-cdef class Path:
+cdef class Path(Handle):
     def __cinit__(self, _VGint pathFormat=VG_PATH_FORMAT_STANDARD,
                   _VGPathDatatype datatype=VG_PATH_DATATYPE_F,
                   _VGfloat scale=1.0, _VGfloat bias=0.0,
@@ -883,7 +883,7 @@ cdef class Path:
         
 _font_reg = {}
 
-cdef class Font:
+cdef class Font(Handle):
     def __cinit__(self, _VGint glyphCapacityHint):
         self._vg_handle = vgCreateFont(glyphCapacityHint)
         check_error()
@@ -984,7 +984,7 @@ cdef class Font:
     
 _paint_reg = {}
 
-cdef class Paint:
+cdef class Paint(Handle):
     def __cinit__(self):
         self._vg_handle = vgCreatePaint()
         check_error()
@@ -1027,9 +1027,9 @@ def get_paint(_VGPaintMode paintMode):
         
 _image_reg = {}
         
-cdef class Image:
+cdef class Image(Handle):
     def __init__(self, _VGint width, _VGint height, 
-                  _VGImageFormat format=VGImageFormat.VG_sRGBA_8888,
+                  _VGImageFormat format=VGImageFormat.VG_lRGBA_8888,
                   _VGbitfield allowedQuality=VGImageQuality.VG_IMAGE_QUALITY_BETTER):
         self._vg_handle = vgCreateImage(format, width, height, allowedQuality)
         check_error()
@@ -1041,25 +1041,40 @@ cdef class Image:
         vgDestroyImage(self._vg_handle)
         check_error()
         
+    property format:
+        def __get__(self):
+            return self.get_param_i(VGImageParamType.VG_IMAGE_FORMAT)
+            
+    property size:
+        def __get__(self):
+            w = self.get_param_i(VGImageParamType.VG_IMAGE_WIDTH)
+            h = self.get_param_i(VGImageParamType.VG_IMAGE_HEIGHT)
+            return (w,h)
+        
     @staticmethod
-    def from_string(bytes data, _VGint W, _VGint H):
+    def from_string(bytes data, _VGint W, _VGint H,
+                    _VGImageFormat format=VGImageFormat.VG_lRGBA_8888):
         cdef:
             Image vgimg
-        vgimg = Image(W,H)
-        vgImageSubData(vgimg._vg_handle, <void *>data, W*4,
-                        VGImageFormat.VG_sRGBA_8888, 0, 0, W, H)
+            char* c_data = data
+            
+        vgimg = Image(W,H, format=format)
+        vgImageSubData(vgimg._vg_handle, c_data, W*4,
+                        format, 0, 0, W, H)
         check_error()
         return vgimg
         
     def to_string(self):
         cdef:
             bytes data
+            char* c_data
             _VGint W,H
         W = vgGetParameteri(self._vg_handle, VG_IMAGE_WIDTH)
         H = vgGetParameteri(self._vg_handle, VG_IMAGE_HEIGHT)
         data = bytes(bytearray(W*H*4))
-        vgGetImageSubData(self._vg_handle, <void *>data, 
-                        W*4, VGImageFormat.VG_sRGBA_8888,
+        c_data = data
+        vgGetImageSubData(self._vg_handle, c_data, 
+                        W*4, VGImageFormat.VG_lRGBA_8888,
                         0, 0, W, H)
         check_error()
         return data
@@ -1075,7 +1090,7 @@ cdef class Image:
     def set_subimage_data(self, object[unsigned int, ndim=2, mode='c'] data,
                           _VGint dataStride,   _VGImageFormat dataFormat,
                           _VGint x, _VGint y, _VGint width, _VGint height):
-        cdef _VGImageFormat format=VGImageFormat.VG_sRGBA_8888
+        cdef _VGImageFormat format=VGImageFormat.VG_lRGBA_8888
         vgImageSubData(self._vg_handle, <void *>data.buf, dataStride,
                         format, x, y, width, height)
         check_error()
@@ -1164,7 +1179,7 @@ cdef class Image:
                               #~ _VGint sx, _VGint sy,
                               #~ _VGint width, _VGint height)
         
-cdef class MaskLayer:
+cdef class MaskLayer(Handle):
     def __cinit__(self, _VGint width, _VGint height):
         self._vg_handle = vgCreateMaskLayer(width, height)
         #~ _VGMaskLayer vgCreateMaskLayer(_VGint width, _VGint height)

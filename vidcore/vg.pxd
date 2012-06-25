@@ -607,24 +607,30 @@ cdef extern from "/opt/vc/include/VG/openvg.h":
 ###Extension classes ###
 
 cdef class Handle:
-    pass
+    cdef:
+        _VGHandle _vg_handle
 
 cdef class Path(Handle):
-    cdef:
-        _VGPath _vg_handle #handle to the path structure
+    pass
+    #cdef:
+    #    _VGPath _vg_handle #handle to the path structure
     
 cdef class Font(Handle):
-    cdef:
-        _VGFont _vg_handle 
+    pass
+    #cdef:
+    #    _VGFont _vg_handle 
 
 cdef class Paint(Handle):
-    cdef:
-        _VGPaint _vg_handle
+    pass
+    #cdef:
+    #    _VGPaint _vg_handle
         
 cdef class Image(Handle):
-    cdef:
-        _VGImage _vg_handle
+    pass
+    #cdef:
+    #    _VGImage _vg_handle
         
 cdef class MaskLayer(Handle):
-    cdef:
-        _VGMaskLayer _vg_handle
+    pass
+    #cdef:
+    #    _VGMaskLayer _vg_handle

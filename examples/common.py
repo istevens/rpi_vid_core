@@ -28,10 +28,10 @@ def create_window(width, height):
     
 def make_egl_context(win, flags):
     api = egl._constants.EGL_OPENVG_API
-    attribs = [_c.EGL_RED_SIZE,       5,
-       _c.EGL_GREEN_SIZE,     6,
-       _c.EGL_BLUE_SIZE,      5,
-       _c.EGL_ALPHA_SIZE,     _c.EGL_DONT_CARE,
+    attribs = [_c.EGL_RED_SIZE,       8,
+       _c.EGL_GREEN_SIZE,     8,
+       _c.EGL_BLUE_SIZE,      8,
+       _c.EGL_ALPHA_SIZE,     8,
        _c.EGL_DEPTH_SIZE,     _c.EGL_DONT_CARE,
        _c.EGL_STENCIL_SIZE,   _c.EGL_DONT_CARE,
        _c.EGL_SAMPLE_BUFFERS,  0,
@@ -56,5 +56,5 @@ def mainloop(display, surface, context, draw_func):
             time.sleep(0.1) #so we don't spin the CPU too much
             draw_func()
             egl.SwapBuffers(display, surface)
-    except KeyboardInterupt:
+    except KeyboardInterrupt:
         sys.exit(0)
