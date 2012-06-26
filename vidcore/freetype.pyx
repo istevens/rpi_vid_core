@@ -31,8 +31,14 @@ cdef extern from "ft_wrap.h":
         pass
     ctypedef FT_Outline_ FT_Outline
     
+    cdef struct  FT_Vector_:
+        FT_Pos  x
+        FT_Pos  y
+    ctypedef FT_Vector_ FT_Vector
+    
     cdef struct FT_GlyphSlotRec_:
         FT_Outline outline
+        FT_Vector  advance
     ctypedef FT_GlyphSlotRec_* FT_GlyphSlot
     
     cdef struct FT_FaceRec_:
@@ -48,11 +54,6 @@ cdef extern from "ft_wrap.h":
         FT_CharMap* charmaps
         FT_GlyphSlot glyph
     ctypedef FT_FaceRec_* FT_Face
-    
-    cdef struct  FT_Vector_:
-        FT_Pos  x
-        FT_Pos  y
-    ctypedef FT_Vector_ FT_Vector
     
     ctypedef int (*FT_Outline_MoveToFunc)(FT_Vector*  to, void* user )
     ctypedef int (*FT_Outline_LineToFunc)(FT_Vector*  to, void* user )
@@ -127,7 +128,7 @@ cdef int conic_to(FT_Vector* control, FT_Vector* to, void* user):
                             
 cdef int cubic_to(FT_Vector* ctrl1, FT_Vector* ctrl2, FT_Vector* to, void* user):
     cdef list data=<list>user
-    data.append( ('CONIC_TO', (float(ctrl1.x), float(ctrl1.y)),\
+    data.append( ('CUBIC_TO', (float(ctrl1.x), float(ctrl1.y)),\
                             (float(ctrl2.x), float(ctrl2.y)),\
                             (float(to.x), float(to.y))) )
     
@@ -163,6 +164,9 @@ cdef class Face:
     property face_flags:
         def __get__(self): return self._face.face_flags
         
+    property units_per_EM:
+        def __get__(self): return self._face.units_per_EM
+        
     def set_char_size(self, FT_F26Dot6 height, FT_F26Dot6 width=0,\
                         FT_UInt horz_res=96, FT_UInt vert_res=96):
         cdef FT_Error err
@@ -177,9 +181,14 @@ cdef class Face:
         err = FT_Load_Glyph(self._face, glyph_index, load_flags)
         if err: raise FreeTypeError("Failed to load glyph: code %d"%err)
         
+    def get_advance(self):
+        cdef FT_Vector vec
+        vec = self._face.glyph.advance
+        return (vec.x, vec.y)
+        
     def decompose_glyph(self):
         cdef:
-            list data=['foo']
+            list data=[]
             FT_Error err
             #void* ptr = &data
         err = FT_Outline_Decompose(&self._face.glyph.outline,\

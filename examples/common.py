@@ -51,10 +51,17 @@ def make_egl_context(win, flags):
 
 
 def mainloop(display, surface, context, draw_func):
+    count = 0
+    start=time.time()
     try:
         while True:#for i in xrange(200):
-            time.sleep(0.1) #so we don't spin the CPU too much
             draw_func()
             egl.SwapBuffers(display, surface)
+            count += 1
+            now = time.time()
+            if now-start > 2.0:
+                print "FPS:", count / float(now-start)
+                start=now
+                count=0
     except KeyboardInterrupt:
         sys.exit(0)
