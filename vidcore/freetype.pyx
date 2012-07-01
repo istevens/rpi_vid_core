@@ -71,6 +71,12 @@ cdef extern from "ft_wrap.h":
         FT_Pos                  delta
     ctypedef FT_Outline_Funcs_ FT_Outline_Funcs
     
+    cdef enum  FT_Kerning_Mode_:
+        FT_KERNING_DEFAULT  = 0
+        FT_KERNING_UNFITTED
+        FT_KERNING_UNSCALED
+    ctypedef FT_Kerning_Mode_ FT_Kerning_Mode;
+    
     FT_Error FT_Init_FreeType(FT_Library  *alibrary)
     FT_Error FT_New_Face( FT_Library library, char* filepath, FT_Long face_index, FT_Face *face )
     FT_Error FT_Done_Face( FT_Face face )
@@ -80,6 +86,24 @@ cdef extern from "ft_wrap.h":
     FT_Error FT_Load_Glyph( FT_Face   face, FT_UInt   glyph_index, FT_Int32  load_flags )
     FT_Error FT_Outline_Decompose( FT_Outline* outline, FT_Outline_Funcs*  func_interface,\
                                         void* user )
+    FT_Error FT_Get_Kerning(FT_Face face, FT_UInt left_glyph, FT_UInt right_glyph,\ 
+                            FT_UInt kern_mode, FT_Vector  *akerning )
+    
+cdef public enum FaceFlags:
+    FT_FACE_FLAG_SCALABLE         = ( 1L <<  0 )
+    FT_FACE_FLAG_FIXED_SIZES      = ( 1L <<  1 )
+    FT_FACE_FLAG_FIXED_WIDTH      = ( 1L <<  2 )
+    FT_FACE_FLAG_SFNT             = ( 1L <<  3 )
+    FT_FACE_FLAG_HORIZONTAL       = ( 1L <<  4 )
+    FT_FACE_FLAG_VERTICAL         = ( 1L <<  5 )
+    FT_FACE_FLAG_KERNING          = ( 1L <<  6 )
+    FT_FACE_FLAG_FAST_GLYPHS      = ( 1L <<  7 )
+    FT_FACE_FLAG_MULTIPLE_MASTERS = ( 1L <<  8 )
+    FT_FACE_FLAG_GLYPH_NAMES      = ( 1L <<  9 )
+    FT_FACE_FLAG_EXTERNAL_STREAM  = ( 1L << 10 )
+    FT_FACE_FLAG_HINTER           = ( 1L << 11 )
+    FT_FACE_FLAG_CID_KEYED        = ( 1L << 12 )
+    FT_FACE_FLAG_TRICKY           = ( 1L << 13 )
     
 cdef:
     FT_Library library
@@ -88,6 +112,12 @@ cdef:
 
 class FreeTypeError(Exception):
     pass
+
+
+class KerningMode:
+    DEFAULT = FT_KERNING_DEFAULT
+    UNFITTED = FT_KERNING_UNFITTED
+    UNSCALED = FT_KERNING_UNSCALED
     
     
 class LoadFlags(object):
@@ -167,6 +197,9 @@ cdef class Face:
     property units_per_EM:
         def __get__(self): return self._face.units_per_EM
         
+    property has_kerning:
+        def __get__(self): return bool(self._face.face_flags & FT_FACE_FLAG_KERNING)
+        
     def set_char_size(self, FT_F26Dot6 height, FT_F26Dot6 width=0,\
                         FT_UInt horz_res=96, FT_UInt vert_res=96):
         cdef FT_Error err
@@ -197,3 +230,9 @@ cdef class Face:
         if err: raise FreeTypeError("Couldn't decompose glyph outline: code %d"%err)
         return data
         
+    def get_kerning(self, FT_UInt left_idx, FT_UInt right_idx, FT_UInt mode=0):
+        cdef:
+            FT_Vector v
+        FT_Get_Kerning(self._face, left_idx, right_idx, mode, &v)
+        return (v.x, v.y)
+    
