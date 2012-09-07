@@ -44,10 +44,17 @@ ext_modules = [
 	Extension(name='vidcore.vg',
                     sources=['vidcore/vg.c'],
                     extra_compile_args=['-DRPI_NO_X'],
-                    libraries=['m','OpenVG'],
+                    libraries=['m','OpenVG','GLESv2'],
                     library_dirs=['/opt/vc/lib'],
                     include_dirs=['.','/opt/vc/include']
-                    )
+                    ),
+    Extension(name='vidcore.freetype',
+              sources=['vidcore/freetype.c'],
+              extra_compile_args=[],
+              libraries=['freetype'],
+              library_dirs = [],
+              include_dirs = ['/usr/include/freetype2']
+              )           
 	]
 
 try:
