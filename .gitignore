@@ -1,5 +1,6 @@
 *.pyxbldc
 build/*
 **.pyc
+**.so
 dist/*
 *.egg-info
