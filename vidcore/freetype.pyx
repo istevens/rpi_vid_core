@@ -75,7 +75,7 @@ cdef extern from "ft_wrap.h":
         FT_KERNING_DEFAULT  = 0
         FT_KERNING_UNFITTED
         FT_KERNING_UNSCALED
-    ctypedef FT_Kerning_Mode_ FT_Kerning_Mode;
+    ctypedef FT_Kerning_Mode_ FT_Kerning_Mode
     
     FT_Error FT_Init_FreeType(FT_Library  *alibrary)
     FT_Error FT_New_Face( FT_Library library, char* filepath, FT_Long face_index, FT_Face *face )
@@ -86,7 +86,7 @@ cdef extern from "ft_wrap.h":
     FT_Error FT_Load_Glyph( FT_Face   face, FT_UInt   glyph_index, FT_Int32  load_flags )
     FT_Error FT_Outline_Decompose( FT_Outline* outline, FT_Outline_Funcs*  func_interface,\
                                         void* user )
-    FT_Error FT_Get_Kerning(FT_Face face, FT_UInt left_glyph, FT_UInt right_glyph,\ 
+    FT_Error FT_Get_Kerning(FT_Face face, FT_UInt left_glyph, FT_UInt right_glyph,\
                             FT_UInt kern_mode, FT_Vector  *akerning )
     
 cdef public enum FaceFlags:

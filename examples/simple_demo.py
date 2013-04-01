@@ -9,7 +9,7 @@ def mainloop(display, surface, context, draw_func):
             time.sleep(0.1) #so we don't spin the CPU too much
             draw_func()
             egl.SwapBuffers(display, surface)
-    except KeyboardInterupt:
+    except KeyboardInterrupt:
         sys.exit(0)
         
         
